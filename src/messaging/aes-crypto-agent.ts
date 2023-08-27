@@ -8,11 +8,14 @@ import {
 
 /**
  * AESで暗号、復号化します。
- * @param keyProvider セッション静的なキーを供給するオブジェクト
  */
 export class AESCryptoAgent<T extends MessageDataObject>
   implements CryptoAgent<T>
 {
+  /**
+   * AESCryptoAgent クラスのインスタンスを初期化します。
+   * @param keyProvider 暗号化の鍵を提供するオブジェクト
+   */
   constructor(private readonly keyProvider: SessionStaticValueProvider) {}
 
   getProvider() {

@@ -1,7 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DefaultMessageValidator = void 0;
 /**
  * メッセージの内容を検証します。
  */
-export class DefaultMessageValidator {
+class DefaultMessageValidator {
     /**
      * DefaultMessageValidator クラスのインスタンスを初期化します。
      * @param config 検証用の設定オブジェクト
@@ -53,3 +56,4 @@ export class DefaultMessageValidator {
         return decryptedMessageData;
     }
 }
+exports.DefaultMessageValidator = DefaultMessageValidator;

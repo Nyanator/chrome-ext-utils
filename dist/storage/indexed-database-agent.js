@@ -1,7 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.IndexdDBDatabaseAgent = void 0;
 /**
  * IndexedDBデータベースを操作します。
  */
-export class IndexdDBDatabaseAgent {
+class IndexdDBDatabaseAgent {
     /**
      * データベースのインスタンスを生成します。
      * @param databaseName データベースの名前
@@ -100,3 +103,4 @@ export class IndexdDBDatabaseAgent {
         this.db?.close();
     }
 }
+exports.IndexdDBDatabaseAgent = IndexdDBDatabaseAgent;

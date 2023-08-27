@@ -1,6 +1,9 @@
-import { getDocument, getLocation } from "./dom-utils";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.waitForAction = exports.reserveLoadedAction = exports.loadResourceText = exports.isBackground = exports.generateSessionStaticValue = exports.EXT_ORIGIN = void 0;
+const dom_utils_1 = require("./dom-utils");
 /** Chrome拡張のURLオリジン */
-export const EXT_ORIGIN = "chrome-extension://" + chrome.runtime.id;
+exports.EXT_ORIGIN = "chrome-extension://" + chrome.runtime.id;
 /**
  * Chromeのセッションに不変な値を保存します。
  * コンテンツスクリプトからセッションにアクセスするには、
@@ -11,8 +14,8 @@ export const EXT_ORIGIN = "chrome-extension://" + chrome.runtime.id;
  * @param regenerate 既存の値があっても強制的に再作成する
  * @returns セッション保存時に解決されるプロミス
  */
-export const generateSessionStaticValue = async (key, value, regenerate) => {
-    if (isBackground()) {
+const generateSessionStaticValue = async (key, value, regenerate) => {
+    if ((0, exports.isBackground)()) {
         chrome.storage.session.setAccessLevel({
             accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
         });
@@ -29,15 +32,16 @@ export const generateSessionStaticValue = async (key, value, regenerate) => {
     });
     return value;
 };
+exports.generateSessionStaticValue = generateSessionStaticValue;
 /**
  * スクリプトが拡張機能のバッググラウンドスクリプトとして実行されているかを判定します。
  * @returns バッググラウンドスクリプトの場合は true、そうでない場合は false
  */
-export const isBackground = () => {
-    if (getLocation().origin === EXT_ORIGIN) {
+const isBackground = () => {
+    if ((0, dom_utils_1.getLocation)().origin === exports.EXT_ORIGIN) {
         // 正確な判定方法がわからないため例外を発生させます
         try {
-            return typeof getDocument() === "undefined";
+            return typeof (0, dom_utils_1.getDocument)() === "undefined";
         }
         catch (error) {
             return true;
@@ -45,17 +49,19 @@ export const isBackground = () => {
     }
     return false;
 };
+exports.isBackground = isBackground;
 /**
  * Chrome拡張のリソースを読み込みテキストで返します。
  * @param path リソースのURL
  * @returns テキストデータの読み込み完了時に解決されるプロミス
  */
-export const loadResourceText = async (path) => {
+const loadResourceText = async (path) => {
     const fileURL = chrome.runtime.getURL(path);
     const result = await fetch(fileURL);
     const text = await result.text();
     return text;
 };
+exports.loadResourceText = loadResourceText;
 /**
  * DOM の読み込み完了タイミングに実行されるアクションを予約します。
  * DOM が既に読み込まれている場合、アクションはすぐに実行されます。
@@ -63,7 +69,7 @@ export const loadResourceText = async (path) => {
  * @param doc Documentオブジェクト
  * @param action DOM が準備できたときに実行されるアクション
  */
-export const reserveLoadedAction = (doc, action) => {
+const reserveLoadedAction = (doc, action) => {
     if (doc.readyState === "interactive" || doc.readyState === "complete") {
         action();
         return;
@@ -72,6 +78,7 @@ export const reserveLoadedAction = (doc, action) => {
         action();
     });
 };
+exports.reserveLoadedAction = reserveLoadedAction;
 /**
  * 条件が満たされるまで非同期に待機します。
  * 条件が満たされるかタイムアウトすると、予約されたアクションが実行されます。
@@ -81,7 +88,7 @@ export const reserveLoadedAction = (doc, action) => {
  * @param maxCheck 最大チェック回数デフォルトは 6000 回です
  * @returns 実行後に解決されるプロミス
  */
-export const waitForAction = async (action, check, timeout = 30, maxCheck = 6000) => {
+const waitForAction = async (action, check, timeout = 30, maxCheck = 6000) => {
     let checkedCount = 0;
     while (checkedCount < maxCheck) {
         if (check() === true) {
@@ -92,3 +99,4 @@ export const waitForAction = async (action, check, timeout = 30, maxCheck = 6000
     }
     action();
 };
+exports.waitForAction = waitForAction;

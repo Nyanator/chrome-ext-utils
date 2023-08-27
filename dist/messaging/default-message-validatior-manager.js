@@ -1,8 +1,11 @@
-import { isBackground } from "../utils/chrome-ext-utils";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DefaultMessageValidatorManager = void 0;
+const chrome_ext_utils_1 = require("../utils/chrome-ext-utils");
 /**
  * MessageValidatorを管理し、トークンを更新します。
  */
-export class DefaultMessageValidatorManager {
+class DefaultMessageValidatorManager {
     getValidators() {
         return this.managedValidators;
     }
@@ -45,7 +48,7 @@ export class DefaultMessageValidatorManager {
     async refreshValidator() {
         // セッションから新しいValidatorを生成
         const newValidator = await this.createMessageValidator();
-        if (isBackground()) {
+        if ((0, chrome_ext_utils_1.isBackground)()) {
             const tokenProvider = newValidator.getProvider();
             const keyProvider = newValidator.getCryptoAgent()?.getProvider();
             // 新しいValidatorのトークンとキーを再作成する
@@ -76,3 +79,4 @@ export class DefaultMessageValidatorManager {
         }
     }
 }
+exports.DefaultMessageValidatorManager = DefaultMessageValidatorManager;

@@ -1,9 +1,12 @@
-import { assertNotNull } from "../utils/ts-utils";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ChromeMessageAgent = void 0;
+const ts_utils_1 = require("../utils/ts-utils");
 /**
  * メッセージの暗号化と復号化を管理し、各コンテキスト間でのメッセージ通信を提供します。
  * Chrome拡張用実装。
  */
-export class ChromeMessageAgent {
+class ChromeMessageAgent {
     /**
      * ChromeExtMessageAgent クラスのインスタンスを初期化します。
      * @param messageValidatorManager MessageValidatorを管理するオブジェクト
@@ -71,7 +74,7 @@ export class ChromeMessageAgent {
         this.runtimeListener = (message, sender, sendResponse) => {
             // IIFE
             (async () => {
-                const senderOrigin = assertNotNull(sender.origin);
+                const senderOrigin = (0, ts_utils_1.assertNotNull)(sender.origin);
                 const messageData = await this.messageValidatorManager.processValidation(senderOrigin, message);
                 if (!messageData) {
                     return;
@@ -132,3 +135,4 @@ export class ChromeMessageAgent {
         return latestToken;
     }
 }
+exports.ChromeMessageAgent = ChromeMessageAgent;
