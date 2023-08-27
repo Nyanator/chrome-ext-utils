@@ -16,6 +16,26 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
-  plugins: ["@typescript-eslint"],
-  rules: {},
+  plugins: ["@typescript-eslint", "import", "unused-imports"],
+  rules: {
+    "unused-imports/no-unused-imports": "warn",
+    "import/order": [
+      "warn",
+      {
+        groups: [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index",
+          "object",
+          "type",
+        ],
+        "newlines-between": "always",
+        pathGroupsExcludedImportTypes: ["builtin"],
+        alphabetize: { order: "asc", caseInsensitive: true },
+      },
+    ],
+  },
 };

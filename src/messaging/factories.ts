@@ -34,11 +34,11 @@ export const createCryptoAgent = async (): Promise<
  * @returns MessageAgent
  */
 export const createMessageAgent = async (
-  config: ValidatorConfig
+  config: ValidatorConfig,
 ): Promise<MessageAgent<MessageDataObject>> => {
   const messageValidatorManager = await createMessageValidatorManager(config);
   const messageAgent = new ChromeMessageAgent<MessageDataObject>(
-    messageValidatorManager
+    messageValidatorManager,
   );
   return messageAgent;
 };
@@ -53,7 +53,7 @@ export const createMessageAgent = async (
 export const createMessageValidatorManager = async (
   config: ValidatorConfig,
   maxMessageValidators = 3,
-  validatorRefreshInterval = 1
+  validatorRefreshInterval = 1,
 ): Promise<MessageValidatorManager<MessageDataObject>> => {
   const createMessageValidatorFunc = async () => createMessageValidator(config);
   const messageValidator = await createMessageValidatorFunc();
@@ -62,7 +62,7 @@ export const createMessageValidatorManager = async (
     new DefaultMessageValidatorManager<MessageDataObject>(
       messageValidator,
       createMessageValidatorFunc,
-      maxMessageValidators
+      maxMessageValidators,
     );
 
   if (isBackground()) {
@@ -73,9 +73,12 @@ export const createMessageValidatorManager = async (
       messageValidatorManager.refreshValidator();
     });
   } else {
-    setInterval(async () => {
-      messageValidatorManager.refreshValidator();
-    }, validatorRefreshInterval * 60 * 1000);
+    setInterval(
+      async () => {
+        messageValidatorManager.refreshValidator();
+      },
+      validatorRefreshInterval * 60 * 1000,
+    );
   }
   return messageValidatorManager;
 };
@@ -86,7 +89,7 @@ export const createMessageValidatorManager = async (
  * @returns MessageValidator
  */
 export const createMessageValidator = async (
-  config: ValidatorConfig
+  config: ValidatorConfig,
 ): Promise<MessageValidator<MessageDataObject>> => {
   const cryptoAgent = await createCryptoAgent();
   const tokenProvider = new SessionStaticTokenProvider();
@@ -94,7 +97,7 @@ export const createMessageValidator = async (
   const messageValidator = new DefaultMessageValidator(
     config,
     tokenProvider,
-    cryptoAgent
+    cryptoAgent,
   );
   return messageValidator;
 };

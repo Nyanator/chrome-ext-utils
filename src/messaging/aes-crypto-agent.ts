@@ -35,10 +35,10 @@ export class AESCryptoAgent<T> implements CryptoAgent<T> {
     const key = this.keyProvider.getValue();
     const decryptedMessageData = CryptoJS.AES.decrypt(
       encryptedMessageData,
-      key
+      key,
     );
     const decryptedMessageDataString = decryptedMessageData.toString(
-      CryptoJS.enc.Utf8
+      CryptoJS.enc.Utf8,
     );
     const decryptedMessageJson = JSON.parse(decryptedMessageDataString);
     return decryptedMessageJson;
