@@ -1,8 +1,8 @@
-import { MessageValidator, MessageValidatorManager } from "./interfaces";
+import { MessageDataObject, MessageValidator, MessageValidatorManager } from "./interfaces";
 /**
  * MessageValidatorを管理し、トークンを更新します。
  */
-export declare class DefaultMessageValidatorManager<T> implements MessageValidatorManager<T> {
+export declare class DefaultMessageValidatorManager<T extends MessageDataObject> implements MessageValidatorManager<T> {
     private readonly createMessageValidator;
     private readonly maxMessageValidators;
     getValidators(): MessageValidator<T>[];

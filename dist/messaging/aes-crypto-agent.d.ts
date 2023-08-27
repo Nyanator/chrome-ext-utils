@@ -1,9 +1,9 @@
-import { CryptoAgent, SessionStaticValueProvider } from "./interfaces";
+import { CryptoAgent, MessageDataObject, SessionStaticValueProvider } from "./interfaces";
 /**
  * AESで暗号、復号化します。
  * @param keyProvider セッション静的なキーを供給するオブジェクト
  */
-export declare class AESCryptoAgent<T> implements CryptoAgent<T> {
+export declare class AESCryptoAgent<T extends MessageDataObject> implements CryptoAgent<T> {
     private readonly keyProvider;
     constructor(keyProvider: SessionStaticValueProvider);
     getProvider(): SessionStaticValueProvider;

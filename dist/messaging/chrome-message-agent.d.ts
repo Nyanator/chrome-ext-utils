@@ -1,9 +1,9 @@
-import { MessageAgent, MessageValidatorManager } from "./interfaces";
+import { MessageAgent, MessageDataObject, MessageValidatorManager } from "./interfaces";
 /**
  * メッセージの暗号化と復号化を管理し、各コンテキスト間でのメッセージ通信を提供します。
  * Chrome拡張用実装。
  */
-export declare class ChromeMessageAgent<T> implements MessageAgent<T> {
+export declare class ChromeMessageAgent<T extends MessageDataObject> implements MessageAgent<T> {
     private readonly messageValidatorManager;
     private windowListener?;
     private runtimeListener?;
