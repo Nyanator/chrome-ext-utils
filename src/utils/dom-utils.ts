@@ -139,8 +139,10 @@ export const maxZIndex = (parentElement: HTMLElement): number => {
     /* istanbul ignore next */
     const childZIndex = elementZIndex ?? 0;
     const parsedZIndex = parseInt(childZIndex);
+    /* istanbul ignore next */
+    const resultZIndex = !isNaN(parsedZIndex) ? parsedZIndex : 0;
 
-    return parsedZIndex;
+    return resultZIndex;
   });
 
   const resultMaxZIndex = Math.max(...zIndexes);
