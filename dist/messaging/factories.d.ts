@@ -3,7 +3,7 @@ import { CryptoAgent, MessageAgent, MessageDataObject, MessageValidator, Message
  * CryptoAgentを生成します。
  * @returns CryptoAgent
  */
-export declare const createCryptoAgent: <T extends MessageDataObject>() => Promise<CryptoAgent<T> | undefined>;
+export declare const createCryptoAgent: <T extends MessageDataObject>() => Promise<CryptoAgent<T>>;
 /**
  * MessageAgentを生成します。
  * @param config 検証設定
