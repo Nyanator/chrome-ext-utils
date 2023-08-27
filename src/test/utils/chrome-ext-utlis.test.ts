@@ -54,7 +54,7 @@ describe("Chrome拡張のユーティリティ関数", () => {
 
     // オリジンが一致していてドキュメントがあるバックグラウンドではない
     locationSpy.mockReturnValue({
-      origin: ChromeExtensionUtils.ORIGIN,
+      origin: ChromeExtensionUtils.EXT_ORIGIN,
     } as Location);
     documentSpy.mockReturnValue(document);
 
@@ -62,7 +62,7 @@ describe("Chrome拡張のユーティリティ関数", () => {
 
     // オリジンが一致していてドキュメントがundefinedはバックグラウンド
     locationSpy.mockReturnValue({
-      origin: ChromeExtensionUtils.ORIGIN,
+      origin: ChromeExtensionUtils.EXT_ORIGIN,
     } as Location);
     documentSpy.mockReturnValue(undefined as unknown as Document);
 
@@ -70,7 +70,7 @@ describe("Chrome拡張のユーティリティ関数", () => {
 
     // オリジンが一致していてドキュメントのアクセス時に例外が発生すればバックグラウンド
     locationSpy.mockReturnValue({
-      origin: ChromeExtensionUtils.ORIGIN,
+      origin: ChromeExtensionUtils.EXT_ORIGIN,
     } as Location);
     documentSpy.mockImplementation(() => {
       throw new Error();

@@ -1,7 +1,7 @@
 import { getDocument, getLocation } from "./dom-utils";
 
 /** Chrome拡張のURLオリジン */
-export const ORIGIN = "chrome-extension://" + chrome.runtime.id;
+export const EXT_ORIGIN = "chrome-extension://" + chrome.runtime.id;
 
 /**
  * Chromeのセッションに不変な値を保存します。
@@ -44,7 +44,7 @@ export const generateSessionStaticValue = async (
  * @returns バッググラウンドスクリプトの場合は true、そうでない場合は false
  */
 export const isBackground = (): boolean => {
-  if (getLocation().origin === ORIGIN) {
+  if (getLocation().origin === EXT_ORIGIN) {
     // 正確な判定方法がわからないため例外を発生させます
     try {
       return typeof getDocument() === "undefined";
