@@ -6,7 +6,7 @@
  */
 export const appendElementToHead = (
   element: HTMLElement,
-  appendElement: HTMLElement
+  appendElement: HTMLElement,
 ) => {
   let head = element.querySelector("head");
   if (!head) {
@@ -34,7 +34,7 @@ export const appendScriptText = (element: HTMLElement, scriptText: string) => {
  */
 export const appendStyleTextToHead = (
   element: HTMLElement,
-  styleText: string
+  styleText: string,
 ) => {
   const style = document.createElement("style");
   style.textContent = styleText;
@@ -66,7 +66,7 @@ export const documentHeight = (doc: Document) => {
  */
 export const findMatchParent = (
   element: HTMLElement,
-  query: string
+  query: string,
 ): HTMLElement | null => {
   let parent = element.parentElement;
   while (parent) {
@@ -85,7 +85,7 @@ export const findMatchParent = (
  * @returns 見つかった祖先要素またはnull
  */
 export const findParentPreElement = (
-  htmlElement: HTMLElement
+  htmlElement: HTMLElement,
 ): HTMLPreElement | null => {
   if (!(htmlElement instanceof HTMLPreElement)) {
     const preElement = findMatchParent(htmlElement, "pre") as HTMLPreElement;
@@ -159,7 +159,7 @@ export const totalHeight = (parentElement: HTMLElement): number => {
       const calcedHeight = sum + elementOffsetHeight;
       return calcedHeight;
     },
-    0
+    0,
   );
 
   return resultTotalHeight;
