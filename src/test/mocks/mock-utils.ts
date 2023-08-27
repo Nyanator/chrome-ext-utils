@@ -1,5 +1,6 @@
 import {
   CryptoAgent,
+  MessageDataObject,
   SessionStaticKeyProvider,
   SessionStaticTokenProvider,
 } from "../../";
@@ -70,15 +71,17 @@ export const rawValidMessage = {
   }`,
 };
 
-export const createMockValidMessage = <T>(cryptoAgent: CryptoAgent<T>) => {
+export const createMockValidMessage = <T extends MessageDataObject>(
+  cryptoAgent: CryptoAgent<T>,
+) => {
   return {
     token: token,
     messageData: cryptoAgent.encrypt(mockMessageDataObject as T),
   };
 };
 
-export const createMockInvalidTokenMessage = <T>(
-  cryptoAgent: CryptoAgent<T>
+export const createMockInvalidTokenMessage = <T extends MessageDataObject>(
+  cryptoAgent: CryptoAgent<T>,
 ) => {
   return {
     token: invalidToken,
@@ -86,13 +89,13 @@ export const createMockInvalidTokenMessage = <T>(
   };
 };
 
-export const createMockInvalidRuntimeIdMessage = <T>(
-  cryptoAgent: CryptoAgent<T>
+export const createMockInvalidRuntimeIdMessage = <T extends MessageDataObject>(
+  cryptoAgent: CryptoAgent<T>,
 ) => {
   return {
     token: token,
     messageData: cryptoAgent.encrypt(
-      mockInvalidRuntimeIdMessageDataObject as T
+      mockInvalidRuntimeIdMessageDataObject as T,
     ),
   };
 };
