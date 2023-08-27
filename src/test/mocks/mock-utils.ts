@@ -21,15 +21,6 @@ export const mockCryptoAgent = {
   decrypt: jest.fn(),
 };
 
-export const mockMessageAgent = {
-  postWindowMessage: jest.fn(),
-  sendRuntimeMessage: jest.fn(),
-  windowMessageListener: jest.fn(),
-  runtimeMessageListener: jest.fn(),
-  removeWindowMessageListener: jest.fn(),
-  removeRuntimeMessageListener: jest.fn(),
-};
-
 export const mockMessageDataObject = {
   runtimeId: runtimeId,
   message: message,
@@ -38,12 +29,6 @@ export const mockMessageDataObject = {
 export const mockInvalidRuntimeIdMessageDataObject = {
   runtimeId: invalidRuntimeId,
   message: message,
-};
-
-export const mockMessageValidatorManager = {
-  validationProcess: jest.fn(),
-  refreshValidator: jest.fn(),
-  getValidators: jest.fn(),
 };
 
 export const mockValidatorConfig = {

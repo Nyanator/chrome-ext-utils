@@ -16,7 +16,7 @@ export const EXT_ORIGIN = "chrome-extension://" + chrome.runtime.id;
 export const generateSessionStaticValue = async (
   key: string,
   value: string,
-  regenerate: boolean
+  regenerate: boolean,
 ): Promise<string> => {
   if (isBackground()) {
     chrome.storage.session.setAccessLevel({
@@ -98,7 +98,7 @@ export const waitForAction = async (
   action: { (): void },
   check: { (): boolean },
   timeout: number = 30,
-  maxCheck: number = 6000
+  maxCheck: number = 6000,
 ): Promise<void> => {
   let checkedCount = 0;
   while (checkedCount < maxCheck) {

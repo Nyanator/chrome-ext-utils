@@ -29,7 +29,7 @@ describe("IndexdDBDatabaseAgentクラス", () => {
     await db.open();
 
     await db.save(key, data);
-    await expect(db.delete(key)).resolves.not.toThrow();
+    await db.delete(key);
     const retrievedData = await db.get(key);
     expect(retrievedData).toBeUndefined();
   });

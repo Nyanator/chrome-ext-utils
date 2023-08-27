@@ -23,7 +23,8 @@ describe.each([false, true])(
 
       jest
         .spyOn(cryptoAgentModule, "createCryptoAgent")
-        .mockResolvedValue(cryptoAgent);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockResolvedValue(cryptoAgent as any);
 
       messageAgent = await createMessageAgent(MockUtils.mockValidatorConfig);
     });
@@ -35,7 +36,7 @@ describe.each([false, true])(
         await messageAgent.postWindowMessage(
           window.parent,
           MockUtils.allowedOrigins[0],
-          MockUtils.mockMessageDataObject
+          MockUtils.mockMessageDataObject,
         );
 
         // window.parent.postMessageを呼び出したときの引数を取り出す
@@ -61,7 +62,7 @@ describe.each([false, true])(
         await messageAgent.postWindowMessage(
           fakeIFrame.contentWindow as unknown as Window,
           MockUtils.allowedOrigins[1],
-          MockUtils.mockMessageDataObject
+          MockUtils.mockMessageDataObject,
         );
 
         // fakeIFrame.contentWindow.postMessage呼び出し時の引数を取り出す
@@ -82,7 +83,7 @@ describe.each([false, true])(
      * @returns WindowMessageを受信したときに解決されるプロミス。
      */
     async function testWindowMessage(
-      postAction: () => Promise<{ data: unknown; origin: string }>
+      postAction: () => Promise<{ data: unknown; origin: string }>,
     ): Promise<void> {
       // Promiseを使用して非同期のリスナー処理をラップ
       const messageReceived = new Promise<void>((resolve) => {
@@ -101,7 +102,7 @@ describe.each([false, true])(
           new MessageEvent("message", {
             origin: origin,
             data: data,
-          })
+          }),
         );
       });
 
@@ -115,7 +116,7 @@ describe.each([false, true])(
 
         await messageAgent.sendRuntimeMessage(
           MockUtils.mockMessageDataObject,
-          undefined
+          undefined,
         );
 
         // chrome.runtime.sendMessageを呼び出したときの引数を取り出す
@@ -131,7 +132,7 @@ describe.each([false, true])(
 
         await messageAgent.sendRuntimeMessage(
           MockUtils.mockMessageDataObject,
-          1
+          1,
         );
 
         // chrome.tabs.sendMessageを呼び出したときの引数を取り出す
@@ -146,7 +147,7 @@ describe.each([false, true])(
      * @returns RuntimeMessageを受信したときに解決されるプロミス。
      */
     async function testRuntimeMessage(
-      sendAction: () => Promise<unknown>
+      sendAction: () => Promise<unknown>,
     ): Promise<MessageDataObject> {
       // Promiseを使用して非同期のリスナー処理をラップ
       const messageReceived = new Promise<MessageDataObject>((resolve) => {
@@ -163,7 +164,7 @@ describe.each([false, true])(
         chrome.runtime.onMessage.callListeners(
           sendedMessage,
           { origin: MockUtils.allowedOrigins[0] },
-          () => {}
+          () => {},
         );
       });
 
@@ -175,14 +176,14 @@ describe.each([false, true])(
 
       const isValidSpy = jest.spyOn(
         DefaultMessageValidator.prototype,
-        "isValid"
+        "isValid",
       );
 
       // ランタイムメッセージをシュミレート
       chrome.runtime.onMessage.callListeners(
         "invalidMessage",
         { origin: MockUtils.allowedOrigins[0] },
-        () => {}
+        () => {},
       );
 
       expect(isValidSpy.mock.results[0].value).toBe(undefined);
@@ -193,7 +194,7 @@ describe.each([false, true])(
 
       const isValidSpy = jest.spyOn(
         DefaultMessageValidator.prototype,
-        "isValid"
+        "isValid",
       );
 
       // ウィンドウメッセージをシュミレート
@@ -201,7 +202,7 @@ describe.each([false, true])(
         new MessageEvent("message", {
           origin: MockUtils.allowedOrigins[0],
           data: "invalidMessage",
-        })
+        }),
       );
 
       expect(isValidSpy.mock.results[0].value).toBe(undefined);
@@ -213,5 +214,5 @@ describe.each([false, true])(
       messageAgent.removeRuntimeMessageListener();
       messageAgent.removeWindowMessageListener();
     });
-  }
+  },
 );

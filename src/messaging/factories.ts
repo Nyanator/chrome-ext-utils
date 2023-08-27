@@ -20,7 +20,7 @@ import { SessionStaticTokenProvider } from "./session-static-token-provider";
  * @returns CryptoAgent
  */
 export const createCryptoAgent = async <T extends MessageDataObject>(): Promise<
-  CryptoAgent<T> | undefined
+  CryptoAgent<T>
 > => {
   const keyProvider = new SessionStaticKeyProvider();
   await keyProvider.generateValue(false);

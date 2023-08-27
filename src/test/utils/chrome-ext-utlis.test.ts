@@ -15,7 +15,7 @@ describe("Chrome拡張のユーティリティ関数", () => {
     let result = await ChromeExtensionUtils.generateSessionStaticValue(
       mockKey,
       mockValue,
-      false
+      false,
     );
 
     // バックグラウンドの時権限を設定しているか
@@ -36,7 +36,7 @@ describe("Chrome拡張のユーティリティ関数", () => {
     result = await ChromeExtensionUtils.generateSessionStaticValue(
       mockKey,
       mockValue,
-      false
+      false,
     );
 
     expect(result).toBe(oldValue);
@@ -44,6 +44,9 @@ describe("Chrome拡張のユーティリティ関数", () => {
   });
 
   it("isBackground スクリプトがバックグラウンドとして実行されているか判定する", () => {
+    expect(DomUtils.getLocation()).toBe(location);
+    expect(DomUtils.getDocument()).toBe(document);
+
     // オリジンが違う時バックグラウンドではない
     const locationSpy = jest.spyOn(DomUtils, "getLocation");
     const documentSpy = jest.spyOn(DomUtils, "getDocument");
@@ -87,7 +90,7 @@ describe("Chrome拡張のユーティリティ関数", () => {
     });
 
     expect(await ChromeExtensionUtils.loadResourceText("test/path")).toBe(
-      mockText
+      mockText,
     );
   });
 
@@ -97,7 +100,7 @@ describe("Chrome拡張のユーティリティ関数", () => {
     // 読み込み済み 実行
     ChromeExtensionUtils.reserveLoadedAction(
       { readyState: "interactive" } as Document,
-      action
+      action,
     );
     expect(action).toBeCalled();
     action.mockClear();
@@ -105,7 +108,7 @@ describe("Chrome拡張のユーティリティ関数", () => {
     // 読み込み済み 実行
     ChromeExtensionUtils.reserveLoadedAction(
       { readyState: "complete" } as Document,
-      action
+      action,
     );
     expect(action).toBeCalled();
     action.mockClear();
@@ -113,7 +116,7 @@ describe("Chrome拡張のユーティリティ関数", () => {
     // 読み込み前 実行されない
     ChromeExtensionUtils.reserveLoadedAction(
       { readyState: "loading" } as Document,
-      action
+      action,
     );
     expect(action).not.toBeCalled();
     action.mockClear();

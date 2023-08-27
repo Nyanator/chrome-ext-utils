@@ -13,7 +13,7 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
    */
   constructor(
     private readonly databaseName: string,
-    private readonly storeName: string
+    private readonly storeName: string,
   ) {}
 
   /**
@@ -24,8 +24,8 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.databaseName);
 
+      /* istanbul ignore next */
       request.onerror = () => {
-        /* istanbul ignore next */
         reject(new Error());
       };
 
@@ -56,8 +56,8 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
       const objectStore = transaction.objectStore(this.storeName);
       const request = objectStore.put(data, key);
 
+      /* istanbul ignore next */
       request.onerror = () => {
-        /* istanbul ignore next */
         reject(new Error());
       };
 
@@ -78,8 +78,8 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
       const objectStore = transaction.objectStore(this.storeName);
       const request = objectStore.get(key);
 
+      /* istanbul ignore next */
       request.onerror = () => {
-        /* istanbul ignore next */
         reject(new Error());
       };
 
@@ -100,8 +100,8 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
       const objectStore = transaction.objectStore(this.storeName);
       const request = objectStore.delete(key);
 
+      /* istanbul ignore next */
       request.onerror = () => {
-        /* istanbul ignore next */
         reject(new Error());
       };
 
