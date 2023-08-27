@@ -1,0 +1,17 @@
+.swc
+.vscode
+/coverage
+/docs
+/node_modules
+/src
+.npmignore
+.prettierrc
+.swcrc
+jest.config.js
+jest.setup.js
+messaging_diagram.png
+package-lock.json
+README.md
+storage_diagram.png
+tsconfig.json
+utils_diagram.png

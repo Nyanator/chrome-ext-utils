@@ -1,6 +1,6 @@
 {
-  "name": "chrome-ext-utils",
-  "version": "1.0.0",
+  "name": "@nyanator/chrome-ext-utils",
+  "version": "0.10.0",
   "description": "utility modules for chrome extension",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,7 +14,7 @@
     "extension",
     "utility"
   ],
-  "author": "",
+  "author": "nyanator",
   "license": "MIT",
   "devDependencies": {
     "@swc/core": "^1.3.78",
@@ -39,5 +39,16 @@
   },
   "dependencies": {
     "crypto-js": "^4.1.1"
-  }
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nyanator/chrome-ext-utils.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nyanator/chrome-ext-utils/issues"
+  },
+  "homepage": "https://github.com/Nyanator/chrome-ext-utils#readme"
 }
