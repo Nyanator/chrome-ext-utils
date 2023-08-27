@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>33/33</span>
+                <span class='fraction'>34/34</span>
             </div>
         
             
@@ -163,7 +163,20 @@
 <a name='L98'></a><a href='#L98'>98</a>
 <a name='L99'></a><a href='#L99'>99</a>
 <a name='L100'></a><a href='#L100'>100</a>
-<a name='L101'></a><a href='#L101'>101</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">7x</span>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
@@ -189,7 +202,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -201,9 +216,10 @@
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -220,9 +236,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-yes">31x</span>
-<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">20x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -239,7 +258,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">20x</span>
@@ -254,9 +277,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -284,12 +310,14 @@ import { SessionStaticTokenProvider } from "./session-static-token-provider";
  * CryptoAgentを生成します。
  * @returns CryptoAgent
  */
-export const createCryptoAgent = async (): Promise&lt;
-  CryptoAgent&lt;MessageDataObject&gt; | undefined
+export const createCryptoAgent = async &lt;T extends MessageDataObject&gt;(): Promise&lt;
+  CryptoAgent&lt;T&gt; | undefined
 &gt; =&gt; {
   const keyProvider = new SessionStaticKeyProvider();
   await keyProvider.generateValue(false);
-  const cryptoAgent = new AESCryptoAgent&lt;MessageDataObject&gt;(keyProvider);
+&nbsp;
+  const cryptoAgent = new AESCryptoAgent&lt;T&gt;(keyProvider);
+&nbsp;
   return cryptoAgent;
 };
 &nbsp;
@@ -298,13 +326,14 @@ export const createCryptoAgent = async (): Promise&lt;
  * @param config 検証設定
  * @returns MessageAgent
  */
-export const createMessageAgent = async (
-  config: ValidatorConfig
-): Promise&lt;MessageAgent&lt;MessageDataObject&gt;&gt; =&gt; {
-  const messageValidatorManager = await createMessageValidatorManager(config);
-  const messageAgent = new ChromeMessageAgent&lt;MessageDataObject&gt;(
-    messageValidatorManager
-  );
+export const createMessageAgent = async &lt;T extends MessageDataObject&gt;(
+  config: ValidatorConfig,
+): Promise&lt;MessageAgent&lt;T&gt;&gt; =&gt; {
+  const messageValidatorManager =
+    await createMessageValidatorManager&lt;T&gt;(config);
+&nbsp;
+  const messageAgent = new ChromeMessageAgent&lt;T&gt;(messageValidatorManager);
+&nbsp;
   return messageAgent;
 };
 &nbsp;
@@ -315,20 +344,23 @@ export const createMessageAgent = async (
  * @param validatorRefreshInterval Validatorを更新する間隔(分)
  * @returns MessageValidatorManager
  */
-export const createMessageValidatorManager = async (
+export const createMessageValidatorManager = async &lt;
+  T extends MessageDataObject,
+&gt;(
   config: ValidatorConfig,
   maxMessageValidators = 3,
-  validatorRefreshInterval = 1
-): Promise&lt;MessageValidatorManager&lt;MessageDataObject&gt;&gt; =&gt; {
-  const createMessageValidatorFunc = async () =&gt; createMessageValidator(config);
+  validatorRefreshInterval = 1,
+): Promise&lt;MessageValidatorManager&lt;T&gt;&gt; =&gt; {
+  const createMessageValidatorFunc = async () =&gt;
+    createMessageValidator&lt;T&gt;(config);
+&nbsp;
   const messageValidator = await createMessageValidatorFunc();
 &nbsp;
-  const messageValidatorManager =
-    new DefaultMessageValidatorManager&lt;MessageDataObject&gt;(
-      messageValidator,
-      createMessageValidatorFunc,
-      maxMessageValidators
-    );
+  const messageValidatorManager = new DefaultMessageValidatorManager&lt;T&gt;(
+    messageValidator,
+    createMessageValidatorFunc,
+    maxMessageValidators,
+  );
 &nbsp;
   if (isBackground()) {
     chrome.alarms.create("refreshSession", {
@@ -338,10 +370,14 @@ export const createMessageValidatorManager = async (
       messageValidatorManager.refreshValidator();
     });
   } else {
-    setInterval(async () =&gt; {
-      messageValidatorManager.refreshValidator();
-    }, validatorRefreshInterval * 60 * 1000);
+    setInterval(
+      async () =&gt; {
+        messageValidatorManager.refreshValidator();
+      },
+      validatorRefreshInterval * 60 * 1000,
+    );
   }
+&nbsp;
   return messageValidatorManager;
 };
 &nbsp;
@@ -350,17 +386,20 @@ export const createMessageValidatorManager = async (
  * @param config 検証設定
  * @returns MessageValidator
  */
-export const createMessageValidator = async (
-  config: ValidatorConfig
-): Promise&lt;MessageValidator&lt;MessageDataObject&gt;&gt; =&gt; {
-  const cryptoAgent = await createCryptoAgent();
+export const createMessageValidator = async &lt;T extends MessageDataObject&gt;(
+  config: ValidatorConfig,
+): Promise&lt;MessageValidator&lt;T&gt;&gt; =&gt; {
+  const cryptoAgent = await createCryptoAgent&lt;T&gt;();
+&nbsp;
   const tokenProvider = new SessionStaticTokenProvider();
   await tokenProvider.generateValue(false);
-  const messageValidator = new DefaultMessageValidator(
+&nbsp;
+  const messageValidator = new DefaultMessageValidator&lt;T&gt;(
     config,
     tokenProvider,
-    cryptoAgent
+    cryptoAgent,
   );
+&nbsp;
   return messageValidator;
 };
 &nbsp;</pre></td></tr></table></pre>
@@ -370,7 +409,7 @@ export const createMessageValidator = async (
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2023-08-27T01:05:46.780Z
+                at 2023-08-27T03:03:06.454Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

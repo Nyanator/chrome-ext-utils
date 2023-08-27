@@ -1,12 +1,18 @@
 import CryptoJS from "crypto-js";
 
-import { CryptoAgent, SessionStaticValueProvider } from "./interfaces";
+import {
+  CryptoAgent,
+  MessageDataObject,
+  SessionStaticValueProvider,
+} from "./interfaces";
 
 /**
  * AESで暗号、復号化します。
  * @param keyProvider セッション静的なキーを供給するオブジェクト
  */
-export class AESCryptoAgent<T> implements CryptoAgent<T> {
+export class AESCryptoAgent<T extends MessageDataObject>
+  implements CryptoAgent<T>
+{
   constructor(private readonly keyProvider: SessionStaticValueProvider) {}
 
   getProvider() {

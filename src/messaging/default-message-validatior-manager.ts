@@ -1,11 +1,15 @@
 import { isBackground } from "../utils/chrome-ext-utils";
 
-import { MessageValidator, MessageValidatorManager } from "./interfaces";
+import {
+  MessageDataObject,
+  MessageValidator,
+  MessageValidatorManager,
+} from "./interfaces";
 
 /**
  * MessageValidatorを管理し、トークンを更新します。
  */
-export class DefaultMessageValidatorManager<T>
+export class DefaultMessageValidatorManager<T extends MessageDataObject>
   implements MessageValidatorManager<T>
 {
   getValidators(): MessageValidator<T>[] {
@@ -23,7 +27,7 @@ export class DefaultMessageValidatorManager<T>
   constructor(
     initialMessageValidator: MessageValidator<T>,
     private readonly createMessageValidator: () => Promise<MessageValidator<T>>,
-    private readonly maxMessageValidators: number
+    private readonly maxMessageValidators: number,
   ) {
     this.managedValidators.push(initialMessageValidator);
   }
@@ -36,7 +40,7 @@ export class DefaultMessageValidatorManager<T>
    */
   async processValidation(
     origin: string,
-    message: unknown
+    message: unknown,
   ): Promise<T | undefined> {
     // 非同期通信ではトークンの更新タイミングと送信が重なるとエラーとなってしまう
     // valiatorオブジェクトのリストを用意して確認することで通信の安定性を実現している
@@ -44,7 +48,7 @@ export class DefaultMessageValidatorManager<T>
     // 管理下にあるValidatorで検証が通る場合はOK
     const managedValidatorsResult = this.managedValidatorsValidation(
       origin,
-      message
+      message,
     );
     if (managedValidatorsResult) {
       return managedValidatorsResult;
@@ -82,7 +86,7 @@ export class DefaultMessageValidatorManager<T>
    */
   private managedValidatorsValidation(
     origin: string,
-    message: unknown
+    message: unknown,
   ): T | undefined {
     // Validatorリストを逆順にして、最新のValidatorから検証を試みます
     for (const validator of [...this.managedValidators].reverse()) {

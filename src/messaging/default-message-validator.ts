@@ -9,8 +9,8 @@ import {
 /**
  * メッセージの内容を検証します。
  */
-export class DefaultMessageValidator
-  implements MessageValidator<MessageDataObject>
+export class DefaultMessageValidator<T extends MessageDataObject>
+  implements MessageValidator<T>
 {
   /**
    * DefaultMessageValidator クラスのインスタンスを初期化します。
@@ -21,7 +21,7 @@ export class DefaultMessageValidator
   constructor(
     private readonly config: ValidatorConfig,
     private readonly tokenProvider: SessionStaticValueProvider,
-    private readonly cryptoAgent: CryptoAgent<MessageDataObject> | undefined
+    private readonly cryptoAgent: CryptoAgent<T> | undefined,
   ) {}
 
   getConfig() {
@@ -42,7 +42,7 @@ export class DefaultMessageValidator
    * @param message 検証するメッセージ
    * @returns メッセージデータ
    */
-  isValid(origin: string, message: unknown): MessageDataObject | undefined {
+  isValid(origin: string, message: unknown): T | undefined {
     // オリジンの検証
     if (!this.config.allowedOrigins.includes(origin)) {
       return;

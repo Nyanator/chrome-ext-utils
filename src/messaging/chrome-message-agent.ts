@@ -2,6 +2,7 @@ import { assertNotNull } from "../utils/ts-utils";
 
 import {
   MessageAgent,
+  MessageDataObject,
   MessageValidator,
   MessageValidatorManager,
 } from "./interfaces";
@@ -10,12 +11,14 @@ import {
  * メッセージの暗号化と復号化を管理し、各コンテキスト間でのメッセージ通信を提供します。
  * Chrome拡張用実装。
  */
-export class ChromeMessageAgent<T> implements MessageAgent<T> {
+export class ChromeMessageAgent<T extends MessageDataObject>
+  implements MessageAgent<T>
+{
   private windowListener?: (event: MessageEvent) => void;
   private runtimeListener?: (
     message: unknown,
     sender: chrome.runtime.MessageSender,
-    sendResponse: (response?: unknown) => void
+    sendResponse: (response?: unknown) => void,
   ) => void;
 
   /**
@@ -23,7 +26,7 @@ export class ChromeMessageAgent<T> implements MessageAgent<T> {
    * @param messageValidatorManager MessageValidatorを管理するオブジェクト
    */
   constructor(
-    private readonly messageValidatorManager: MessageValidatorManager<T>
+    private readonly messageValidatorManager: MessageValidatorManager<T>,
   ) {}
 
   /**
@@ -35,7 +38,7 @@ export class ChromeMessageAgent<T> implements MessageAgent<T> {
   async postWindowMessage(
     target: Window,
     targetOrigin: string,
-    message: T
+    message: T,
   ): Promise<void> {
     const messageData = this.makeMessageData(message);
     const latestToken = this.getLatestToken();
@@ -45,7 +48,7 @@ export class ChromeMessageAgent<T> implements MessageAgent<T> {
         messageData: messageData,
         token: latestToken,
       },
-      targetOrigin
+      targetOrigin,
     );
   }
 
@@ -57,7 +60,7 @@ export class ChromeMessageAgent<T> implements MessageAgent<T> {
    */
   async sendRuntimeMessage(
     message: T,
-    tabId: number | undefined
+    tabId: number | undefined,
   ): Promise<unknown> {
     const latestValidator = this.getLatestValidator();
     const messageData = this.makeMessageData(message);
@@ -87,7 +90,7 @@ export class ChromeMessageAgent<T> implements MessageAgent<T> {
     this.windowListener = async (event: MessageEvent) => {
       const messageData = await this.messageValidatorManager.processValidation(
         event.origin,
-        event.data
+        event.data,
       );
       if (!messageData) {
         return;
@@ -109,7 +112,7 @@ export class ChromeMessageAgent<T> implements MessageAgent<T> {
     this.runtimeListener = (
       message: unknown,
       sender: chrome.runtime.MessageSender,
-      sendResponse: (response?: unknown) => void
+      sendResponse: (response?: unknown) => void,
     ) => {
       // IIFE
       (async () => {
@@ -117,7 +120,7 @@ export class ChromeMessageAgent<T> implements MessageAgent<T> {
         const messageData =
           await this.messageValidatorManager.processValidation(
             senderOrigin,
-            message
+            message,
           );
 
         if (!messageData) {

@@ -1,5 +1,5 @@
 /** 暗号化、複合化 */
-export interface CryptoAgent<T> {
+export interface CryptoAgent<T extends MessageDataObject> {
   /**
    * 暗号化に使う鍵を提供するオブジェクトを返します。
    */
@@ -19,7 +19,7 @@ export interface CryptoAgent<T> {
 }
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート */
-export interface MessageAgent<T> {
+export interface MessageAgent<T extends MessageDataObject> {
   /**
    * 暗号化されたメッセージを windowに送信します。
    * @param target 送信先の window
@@ -29,7 +29,7 @@ export interface MessageAgent<T> {
   postWindowMessage(
     target: Window,
     targetOrigin: string,
-    message: T
+    message: T,
   ): Promise<void>;
 
   /**
@@ -76,7 +76,7 @@ export interface MessageDataObject {
 }
 
 /** MessageValidatorを管理し、トークンを自動で更新 */
-export interface MessageValidatorManager<T> {
+export interface MessageValidatorManager<T extends MessageDataObject> {
   /**
    * 送信内容の検証をします。
    * @param origin 送信元オリジン
@@ -97,7 +97,7 @@ export interface MessageValidatorManager<T> {
 }
 
 /** メッセージの正当性を検証 */
-export interface MessageValidator<T> {
+export interface MessageValidator<T extends MessageDataObject> {
   /** 検証設定オブジェクトを返します。 */
   getConfig(): ValidatorConfig;
 
