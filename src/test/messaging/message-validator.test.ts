@@ -7,7 +7,7 @@ import {
 } from "../../";
 import * as MockUtils from "../mocks/mock-utils";
 
-describe("DefaultMessageValidatorクラス", () => {
+describe("MessageValidatorクラス", () => {
   let cryptoAgent: CryptoAgent<MessageDataObject>;
   let validator: MessageValidator<MessageDataObject>;
   // 有効なメッセージのモック

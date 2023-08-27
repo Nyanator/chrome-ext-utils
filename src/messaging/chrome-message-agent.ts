@@ -10,7 +10,7 @@ import {
  * メッセージの暗号化と復号化を管理し、各コンテキスト間でのメッセージ通信を提供します。
  * Chrome拡張用実装。
  */
-export class ChromeExtMessageAgent<T> implements MessageAgent<T> {
+export class ChromeMessageAgent<T> implements MessageAgent<T> {
   private windowListener?: (event: MessageEvent) => void;
   private runtimeListener?: (
     message: unknown,

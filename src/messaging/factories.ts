@@ -1,6 +1,9 @@
 import { isBackground } from "../utils/chrome-ext-utils";
 
-import { AESCryptoAgent } from "./crypto-agent";
+import { AESCryptoAgent } from "./aes-crypto-agent";
+import { ChromeMessageAgent } from "./chrome-message-agent";
+import { DefaultMessageValidatorManager } from "./default-message-validatior-manager";
+import { DefaultMessageValidator } from "./default-message-validator";
 import {
   CryptoAgent,
   MessageAgent,
@@ -9,13 +12,8 @@ import {
   MessageValidatorManager,
   ValidatorConfig,
 } from "./interfaces";
-import { ChromeExtMessageAgent } from "./message-agent";
-import { DefaultMessageValidatorManager } from "./message-validatior-manager";
-import { DefaultMessageValidator } from "./message-validator";
-import {
-  SessionStaticKeyProvider,
-  SessionStaticTokenProvider,
-} from "./session-static-value-provider";
+import { SessionStaticKeyProvider } from "./session-static-key-provider";
+import { SessionStaticTokenProvider } from "./session-static-token-provider";
 
 /**
  * CryptoAgentを生成します。
@@ -39,7 +37,7 @@ export const createMessageAgent = async (
   config: ValidatorConfig
 ): Promise<MessageAgent<MessageDataObject>> => {
   const messageValidatorManager = await createMessageValidatorManager(config);
-  const messageAgent = new ChromeExtMessageAgent<MessageDataObject>(
+  const messageAgent = new ChromeMessageAgent<MessageDataObject>(
     messageValidatorManager
   );
   return messageAgent;

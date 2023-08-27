@@ -3,7 +3,7 @@ import {
   MessageDataObject,
   SessionStaticKeyProvider,
   createCryptoAgent,
-} from "../../";
+} from "../..";
 import { assertNotNull } from "../../utils/ts-utils";
 import { mockMessageDataObject } from "../mocks/mock-utils";
 
