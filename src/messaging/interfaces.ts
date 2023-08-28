@@ -1,3 +1,7 @@
+/**
+ * @file 暗号化メッセージパッシングクラスインターフェース
+ */
+
 /** 暗号化、複合化 */
 export interface CryptoAgent<T extends MessageDataObject> {
   /**

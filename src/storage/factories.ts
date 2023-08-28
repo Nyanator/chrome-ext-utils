@@ -1,3 +1,7 @@
+/**
+ * @file 永続化データーベースクラスファクトリ関数
+ */
+
 import { IndexdDBDatabaseAgent } from "./indexed-database-agent";
 import { DatabaseAgent } from "./interfaces";
 
@@ -9,7 +13,7 @@ import { DatabaseAgent } from "./interfaces";
  */
 export const createDatabaseAgent = (
   databaseName: string,
-  storeName: string
+  storeName: string,
 ): DatabaseAgent => {
   const databaseAgent = new IndexdDBDatabaseAgent(databaseName, storeName);
   return databaseAgent;

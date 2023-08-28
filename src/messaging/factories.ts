@@ -1,3 +1,7 @@
+/**
+ * @file 暗号化メッセージパッシングクラスファクトリ関数
+ */
+
 import { isBackground } from "../utils/chrome-ext-utils";
 
 import { AESCryptoAgent } from "./aes-crypto-agent";

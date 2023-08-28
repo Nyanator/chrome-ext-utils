@@ -1,3 +1,6 @@
+export * from "./element-loader/factories";
+export * from "./element-loader/fetch-element-loader";
+export * from "./element-loader/interfaces";
 export * from "./messaging/aes-crypto-agent";
 export * from "./messaging/chrome-message-agent";
 export * from "./messaging/default-message-validatior-manager";

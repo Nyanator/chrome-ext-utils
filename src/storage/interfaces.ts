@@ -1,3 +1,7 @@
+/**
+ * @file 永続化データーベースクラスインターフェース
+ */
+
 /** 永続化データベース */
 export interface DatabaseAgent {
   /**
