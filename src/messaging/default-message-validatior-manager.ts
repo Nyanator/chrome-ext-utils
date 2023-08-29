@@ -1,7 +1,7 @@
 import { isBackground } from "../utils/chrome-ext-utils";
 
 import {
-  MessageDataObject,
+  MessageData,
   MessageValidator,
   MessageValidatorManager,
 } from "./interfaces";
@@ -9,7 +9,7 @@ import {
 /**
  * MessageValidatorを管理し、トークンを更新します。
  */
-export class DefaultMessageValidatorManager<T extends MessageDataObject>
+export class DefaultMessageValidatorManager<T extends MessageData>
   implements MessageValidatorManager<T>
 {
   getValidators(): MessageValidator<T>[] {
@@ -66,7 +66,7 @@ export class DefaultMessageValidatorManager<T extends MessageDataObject>
   /**
    * 管理下のValidatorを更新します。
    */
-  async refreshValidator(): Promise<void> {
+  async refreshValidators(): Promise<void> {
     // セッションから新しいValidatorを生成
     const newValidator = await this.createMessageValidator();
 

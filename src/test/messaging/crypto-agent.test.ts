@@ -1,14 +1,14 @@
 import {
   CryptoAgent,
-  MessageDataObject,
+  MessageData,
   SessionStaticKeyProvider,
   createCryptoAgent,
 } from "../..";
 import { assertNotNull } from "../../utils/ts-utils";
-import { mockMessageDataObject } from "../mocks/mock-utils";
+import { mockMessageData } from "../mocks/mock-utils";
 
 describe("CryptoAgentクラス", () => {
-  let cryptoAgent: CryptoAgent<MessageDataObject>;
+  let cryptoAgent: CryptoAgent<MessageData>;
 
   beforeEach(async () => {
     jest
@@ -22,14 +22,14 @@ describe("CryptoAgentクラス", () => {
   });
 
   it("メッセージデータを暗号化し、再度複合化する。", () => {
-    const encryptedData = cryptoAgent.encrypt(mockMessageDataObject);
+    const encryptedData = cryptoAgent.encrypt(mockMessageData);
 
     // 暗号化した結果が元のデータと等しくない
-    expect(encryptedData).not.toEqual(mockMessageDataObject);
+    expect(encryptedData).not.toEqual(mockMessageData);
 
     const decryptedData = cryptoAgent.decrypt(encryptedData);
 
     // 復号化した結果が元のデータと等しい
-    expect(decryptedData).toEqual(mockMessageDataObject);
+    expect(decryptedData).toEqual(mockMessageData);
   });
 });

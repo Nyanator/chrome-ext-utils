@@ -1,6 +1,6 @@
 import {
   CryptoAgent,
-  MessageDataObject,
+  MessageData,
   SessionStaticKeyProvider,
   SessionStaticTokenProvider,
 } from "../../";
@@ -21,12 +21,12 @@ export const mockCryptoAgent = {
   decrypt: jest.fn(),
 };
 
-export const mockMessageDataObject = {
+export const mockMessageData = {
   runtimeId: runtimeId,
   message: message,
 };
 
-export const mockInvalidRuntimeIdMessageDataObject = {
+export const mockInvalidRuntimeIdMessageData = {
   runtimeId: invalidRuntimeId,
   message: message,
 };
@@ -56,32 +56,30 @@ export const rawValidMessage = {
   }`,
 };
 
-export const createMockValidMessage = <T extends MessageDataObject>(
+export const createMockValidMessage = <T extends MessageData>(
   cryptoAgent: CryptoAgent<T>,
 ) => {
   return {
     token: token,
-    messageData: cryptoAgent.encrypt(mockMessageDataObject as T),
+    messageData: cryptoAgent.encrypt(mockMessageData as T),
   };
 };
 
-export const createMockInvalidTokenMessage = <T extends MessageDataObject>(
+export const createMockInvalidTokenMessage = <T extends MessageData>(
   cryptoAgent: CryptoAgent<T>,
 ) => {
   return {
     token: invalidToken,
-    messageData: cryptoAgent.encrypt(mockMessageDataObject as T),
+    messageData: cryptoAgent.encrypt(mockMessageData as T),
   };
 };
 
-export const createMockInvalidRuntimeIdMessage = <T extends MessageDataObject>(
+export const createMockInvalidRuntimeIdMessage = <T extends MessageData>(
   cryptoAgent: CryptoAgent<T>,
 ) => {
   return {
     token: token,
-    messageData: cryptoAgent.encrypt(
-      mockInvalidRuntimeIdMessageDataObject as T,
-    ),
+    messageData: cryptoAgent.encrypt(mockInvalidRuntimeIdMessageData as T),
   };
 };
 

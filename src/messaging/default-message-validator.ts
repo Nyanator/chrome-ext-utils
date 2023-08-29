@@ -1,6 +1,6 @@
 import {
   CryptoAgent,
-  MessageDataObject,
+  MessageData,
   MessageValidator,
   SessionStaticValueProvider,
   ValidatorConfig,
@@ -9,7 +9,7 @@ import {
 /**
  * メッセージの内容を検証します。
  */
-export class DefaultMessageValidator<T extends MessageDataObject>
+export class DefaultMessageValidator<T extends MessageData>
   implements MessageValidator<T>
 {
   /**

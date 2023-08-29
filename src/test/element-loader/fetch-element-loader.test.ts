@@ -9,18 +9,19 @@ import { loadResourceText } from "../../utils/chrome-ext-utils";
 // モック関数を定義
 jest.mock("../../utils/chrome-ext-utils");
 
-describe("FetchElementLoaderのテスト", () => {
-  it("指定されたpathからElementを正しくロードする", async () => {
-    // モックの戻り値を設定
+const spec = defineElements({
+  wrapdiv: { id: "#wrapdiv", elementType: HTMLDivElement },
+  someButton: { id: "#someButton", elementType: HTMLButtonElement },
+});
+
+describe("FetchElementLoaderクラス", () => {
+  beforeEach(() => {
     (loadResourceText as jest.Mock).mockResolvedValue(
       '<div id="wrapdiv"></div><button id="someButton"></button>',
     );
+  });
 
-    const spec = {
-      wrapdiv: { id: "#wrapdiv", elementType: HTMLDivElement },
-      someButton: { id: "#someButton", elementType: HTMLButtonElement },
-    };
-
+  it("指定されたpathからElementを正しくロードする", async () => {
     const loader = createFetchElementLoader(spec, "/path/to/resource.html");
     await loader.loadElements();
 
@@ -32,13 +33,6 @@ describe("FetchElementLoaderのテスト", () => {
     (loadResourceText as jest.Mock).mockResolvedValue(
       '<h1 id="unexpectedElement"></h1>',
     );
-
-    const spec = {
-      wrapdiv: { id: "#wrapdiv", elementType: HTMLDivElement },
-      someButton: { id: "#someButton", elementType: HTMLButtonElement },
-      svg: { id: "#svgid", elementType: SVGElement },
-    };
-
     const loader = createFetchElementLoader(spec, "/path/to/resource.html");
 
     await expect(loader.loadElements()).rejects.toThrow();
@@ -48,27 +42,12 @@ describe("FetchElementLoaderのテスト", () => {
     (loadResourceText as jest.Mock).mockResolvedValue(
       '<h1 id="wrapdiv"></h1><button id="someButton"></button>',
     );
-
-    const spec = {
-      wrapdiv: { id: "#wrapdiv", elementType: HTMLDivElement },
-      someButton: { id: "#someButton", elementType: HTMLButtonElement },
-    };
-
     const loader = createFetchElementLoader(spec, "/path/to/resource.html");
 
     await expect(loader.loadElements()).rejects.toThrow();
   });
 
   it("ElementMapを併用することで任意の型を持ったElmentLoader<T>をインジェクションできる", async () => {
-    // モックの戻り値を設定
-    (loadResourceText as jest.Mock).mockResolvedValue(
-      '<div id="wrapdiv"></div><button id="someButton"></button>',
-    );
-
-    const spec = defineElements({
-      wrapdiv: { id: "#wrapdiv", elementType: HTMLDivElement },
-      someButton: { id: "#someButton", elementType: HTMLButtonElement },
-    });
     type Spec = ElementMap<typeof spec>;
 
     const typedLoader: ElementLoader<Spec> = createFetchElementLoader(
@@ -86,5 +65,49 @@ describe("FetchElementLoaderのテスト", () => {
     };
 
     typedLoaderParamTest(typedLoader);
+  });
+
+  it("宣言的な記法でイベントハンドラの設定ができる", async () => {
+    const handleClick = jest.fn();
+
+    const loader = createFetchElementLoader(spec, "/path/to/resource.html");
+    await loader.loadElements();
+    loader.eventHandlers([
+      {
+        element: "someButton",
+        events: {
+          click: handleClick,
+        },
+      },
+      {
+        element: "wrapdiv",
+        events: {
+          click: handleClick,
+        },
+      },
+    ]);
+
+    loader.elements.someButton.click();
+    loader.elements.wrapdiv.click();
+    expect(handleClick).toHaveBeenCalledTimes(2);
+  });
+
+  it("イベントハンドラが削除できる", async () => {
+    const handleClick = jest.fn();
+
+    const loader = createFetchElementLoader(spec, "/path/to/resource.html");
+    await loader.loadElements();
+    loader.eventHandlers([
+      {
+        element: "someButton",
+        events: {
+          click: handleClick,
+        },
+      },
+    ]);
+    loader.removeAllEventHandlers();
+
+    loader.elements.someButton.click();
+    expect(handleClick).toHaveBeenCalledTimes(0);
   });
 });

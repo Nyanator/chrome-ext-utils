@@ -2,26 +2,26 @@ import {
   AESCryptoAgent,
   CryptoAgent,
   DefaultMessageValidator,
-  MessageDataObject,
+  MessageData,
   MessageValidator,
 } from "../../";
 import * as MockUtils from "../mocks/mock-utils";
 
 describe("MessageValidatorクラス", () => {
-  let cryptoAgent: CryptoAgent<MessageDataObject>;
-  let validator: MessageValidator<MessageDataObject>;
+  let cryptoAgent: CryptoAgent<MessageData>;
+  let validator: MessageValidator<MessageData>;
   // 有効なメッセージのモック
   let mockValidMessage: unknown;
 
   beforeEach(() => {
-    cryptoAgent = new AESCryptoAgent<MessageDataObject>(
-      MockUtils.mockSessionStaticValueProvider
+    cryptoAgent = new AESCryptoAgent<MessageData>(
+      MockUtils.mockSessionStaticValueProvider,
     );
 
     validator = new DefaultMessageValidator(
       MockUtils.mockValidatorConfig,
       MockUtils.mockSessionStaticValueProvider,
-      cryptoAgent
+      cryptoAgent,
     );
 
     mockValidMessage = MockUtils.createMockValidMessage(cryptoAgent);
@@ -31,20 +31,20 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid(
         MockUtils.mockValidatorConfig.allowedOrigins[0],
-        mockValidMessage
-      )
+        mockValidMessage,
+      ),
     ).toBeTruthy();
     expect(
       validator.isValid(
         MockUtils.mockValidatorConfig.allowedOrigins[1],
-        mockValidMessage
-      )
+        mockValidMessage,
+      ),
     ).toBeTruthy();
   });
 
   it("間違ったoriginが検証を通過しない", () => {
     expect(
-      validator.isValid(MockUtils.invalidOrigin, mockValidMessage)
+      validator.isValid(MockUtils.invalidOrigin, mockValidMessage),
     ).toBeUndefined();
   });
 
@@ -54,8 +54,8 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid(
         MockUtils.mockValidatorConfig.allowedOrigins[0],
-        invalidTokenMessage
-      )
+        invalidTokenMessage,
+      ),
     ).toBeUndefined();
   });
 
@@ -63,8 +63,8 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid(
         MockUtils.mockValidatorConfig.allowedOrigins[0],
-        MockUtils.invalidStructureMessage
-      )
+        MockUtils.invalidStructureMessage,
+      ),
     ).toBeUndefined();
   });
 
@@ -75,14 +75,14 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid(
         MockUtils.mockValidatorConfig.allowedOrigins[0],
-        invalidRuntimeIdMessage
-      )
+        invalidRuntimeIdMessage,
+      ),
     ).toBeUndefined();
   });
 
   it("異なる暗号化キーで作成されたデータが検証を通過しない", () => {
     const diffrentKey = "diffrent key";
-    const differentCryptoAgent = new AESCryptoAgent<MessageDataObject>({
+    const differentCryptoAgent = new AESCryptoAgent<MessageData>({
       getValue: () => diffrentKey,
       generateValue: async () => diffrentKey,
     });
@@ -92,7 +92,7 @@ describe("MessageValidatorクラス", () => {
     expect(() => {
       validator.isValid(
         MockUtils.mockValidatorConfig.allowedOrigins[0],
-        diffrentKeyMessage
+        diffrentKeyMessage,
       );
     }).toThrow();
   });
@@ -101,13 +101,13 @@ describe("MessageValidatorクラス", () => {
     const rawValidator = new DefaultMessageValidator(
       MockUtils.mockValidatorConfig,
       MockUtils.mockSessionStaticValueProvider,
-      undefined
+      undefined,
     );
     expect(
       rawValidator.isValid(
         MockUtils.mockValidatorConfig.allowedOrigins[0],
-        MockUtils.rawValidMessage
-      )
+        MockUtils.rawValidMessage,
+      ),
     ).toBeTruthy();
   });
 });

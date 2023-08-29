@@ -3,7 +3,7 @@ import { chrome } from "jest-chrome";
 import {
   DefaultMessageValidator,
   MessageAgent,
-  MessageDataObject,
+  MessageData,
   createMessageAgent,
 } from "../../";
 import * as cryptoAgentModule from "../../messaging/factories";
@@ -12,7 +12,7 @@ import * as MockUtils from "../mocks/mock-utils";
 describe.each([false, true])(
   "MessageAgentクラス 疎通テスト (暗号化: %s)",
   (isEncryptionEnabled) => {
-    let messageAgent: MessageAgent<MessageDataObject>;
+    let messageAgent: MessageAgent<MessageData>;
 
     MockUtils.mockAllSessionValues();
 
@@ -36,7 +36,7 @@ describe.each([false, true])(
         await messageAgent.postWindowMessage(
           window.parent,
           MockUtils.allowedOrigins[0],
-          MockUtils.mockMessageDataObject,
+          MockUtils.mockMessageData,
         );
 
         // window.parent.postMessageを呼び出したときの引数を取り出す
@@ -62,7 +62,7 @@ describe.each([false, true])(
         await messageAgent.postWindowMessage(
           fakeIFrame.contentWindow as unknown as Window,
           MockUtils.allowedOrigins[1],
-          MockUtils.mockMessageDataObject,
+          MockUtils.mockMessageData,
         );
 
         // fakeIFrame.contentWindow.postMessage呼び出し時の引数を取り出す
@@ -89,7 +89,7 @@ describe.each([false, true])(
       const messageReceived = new Promise<void>((resolve) => {
         // リスナーを設定
         messageAgent.windowMessageListener((data) => {
-          expect(data).toEqual(MockUtils.mockMessageDataObject);
+          expect(data).toEqual(MockUtils.mockMessageData);
           resolve();
         });
       });
@@ -115,14 +115,14 @@ describe.each([false, true])(
         (chrome.runtime.sendMessage as any) = jest.fn();
 
         await messageAgent.sendRuntimeMessage(
-          MockUtils.mockMessageDataObject,
+          MockUtils.mockMessageData,
           undefined,
         );
 
         // chrome.runtime.sendMessageを呼び出したときの引数を取り出す
         return (chrome.runtime.sendMessage as jest.Mock).mock.calls[0][1];
       });
-      expect(receivedMessage).toEqual(MockUtils.mockMessageDataObject);
+      expect(receivedMessage).toEqual(MockUtils.mockMessageData);
     });
 
     it("ランタイムメッセージをタブに送受信できるか", async () => {
@@ -130,15 +130,12 @@ describe.each([false, true])(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (chrome.tabs.sendMessage as any) = jest.fn();
 
-        await messageAgent.sendRuntimeMessage(
-          MockUtils.mockMessageDataObject,
-          1,
-        );
+        await messageAgent.sendRuntimeMessage(MockUtils.mockMessageData, 1);
 
         // chrome.tabs.sendMessageを呼び出したときの引数を取り出す
         return (chrome.tabs.sendMessage as jest.Mock).mock.calls[0][1];
       });
-      expect(receivedMessage).toEqual(MockUtils.mockMessageDataObject);
+      expect(receivedMessage).toEqual(MockUtils.mockMessageData);
     });
 
     /**
@@ -148,9 +145,9 @@ describe.each([false, true])(
      */
     async function testRuntimeMessage(
       sendAction: () => Promise<unknown>,
-    ): Promise<MessageDataObject> {
+    ): Promise<MessageData> {
       // Promiseを使用して非同期のリスナー処理をラップ
-      const messageReceived = new Promise<MessageDataObject>((resolve) => {
+      const messageReceived = new Promise<MessageData>((resolve) => {
         messageAgent.runtimeMessageListener(async (data) => {
           resolve(data);
         });

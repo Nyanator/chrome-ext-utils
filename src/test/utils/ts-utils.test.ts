@@ -25,4 +25,10 @@ describe("ts-utils TypeScriptのユーティリティ", () => {
       expect(TsUtils.assertNotNull(truthyValue)).toBe(truthyValue);
     });
   });
+
+  it("uniqueSet Mapの同一キーに対するsetを禁止する", () => {
+    const map = new Map<string, string>();
+    expect(() => TsUtils.uniqueSet(map, "key", "value")).not.toThrow();
+    expect(() => TsUtils.uniqueSet(map, "key", "value")).toThrow();
+  });
 });

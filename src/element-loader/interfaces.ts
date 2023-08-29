@@ -10,10 +10,14 @@ export type ElementSpecifier<T extends Element> = {
 
 /** Elementを型安全に読み込むローダー */
 export interface ElementLoader<Elements extends { [key: string]: Element }> {
-  /** 読み込んだElementのマップ。 */
+  /** 読み込んだElementのマップ */
   readonly elements: Elements;
   /** Elementを読み込みます */
-  loadElements(): Promise<void>;
+  loadElements(): Promise<this>;
+  /** 読み込んだElementにイベントハンドラーを一括設定 */
+  eventHandlers(configs: EventHandlerConfig[]): this;
+  /** イベントハンドラーを一括で解除 */
+  removeAllEventHandlers(): void;
 }
 
 /** ElementLoader用 型ガード*/
@@ -32,4 +36,10 @@ export type ExtractElement<T> = T extends ElementSpecifier<infer E> ? E : never;
 /** Specsの各キーに対するElementSpecifierのelementTypeの具体的な型をマッピングする */
 export type ElementMap<Specs> = {
   [K in keyof Specs]: ExtractElement<Specs[K]>;
+};
+
+/** Elementへのハンドラーの設定を宣言的に行う設定 */
+export type EventHandlerConfig = {
+  element: string;
+  events: { [key: string]: EventListener };
 };

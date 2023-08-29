@@ -11,7 +11,7 @@ import { DefaultMessageValidator } from "./default-message-validator";
 import {
   CryptoAgent,
   MessageAgent,
-  MessageDataObject,
+  MessageData,
   MessageValidator,
   MessageValidatorManager,
   ValidatorConfig,
@@ -23,14 +23,13 @@ import { SessionStaticTokenProvider } from "./session-static-token-provider";
  * CryptoAgentを生成します。
  * @returns CryptoAgent
  */
-export const createCryptoAgent = async <T extends MessageDataObject>(): Promise<
+export const createCryptoAgent = async <T extends MessageData>(): Promise<
   CryptoAgent<T>
 > => {
   const keyProvider = new SessionStaticKeyProvider();
   await keyProvider.generateValue(false);
 
   const cryptoAgent = new AESCryptoAgent<T>(keyProvider);
-
   return cryptoAgent;
 };
 
@@ -39,7 +38,7 @@ export const createCryptoAgent = async <T extends MessageDataObject>(): Promise<
  * @param config 検証設定
  * @returns MessageAgent
  */
-export const createMessageAgent = async <T extends MessageDataObject>(
+export const createMessageAgent = async <T extends MessageData>(
   config: ValidatorConfig,
 ): Promise<MessageAgent<T>> => {
   const messageValidatorManager =
@@ -57,9 +56,7 @@ export const createMessageAgent = async <T extends MessageDataObject>(
  * @param validatorRefreshInterval Validatorを更新する間隔(分)
  * @returns MessageValidatorManager
  */
-export const createMessageValidatorManager = async <
-  T extends MessageDataObject,
->(
+export const createMessageValidatorManager = async <T extends MessageData>(
   config: ValidatorConfig,
   maxMessageValidators = 3,
   validatorRefreshInterval = 1,
@@ -80,12 +77,12 @@ export const createMessageValidatorManager = async <
       periodInMinutes: validatorRefreshInterval,
     });
     chrome.alarms.onAlarm.addListener(() => {
-      messageValidatorManager.refreshValidator();
+      messageValidatorManager.refreshValidators();
     });
   } else {
     setInterval(
       async () => {
-        messageValidatorManager.refreshValidator();
+        messageValidatorManager.refreshValidators();
       },
       validatorRefreshInterval * 60 * 1000,
     );
@@ -99,7 +96,7 @@ export const createMessageValidatorManager = async <
  * @param config 検証設定
  * @returns MessageValidator
  */
-export const createMessageValidator = async <T extends MessageDataObject>(
+export const createMessageValidator = async <T extends MessageData>(
   config: ValidatorConfig,
 ): Promise<MessageValidator<T>> => {
   const cryptoAgent = await createCryptoAgent<T>();

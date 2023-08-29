@@ -2,7 +2,7 @@ import { assertNotNull } from "../utils/ts-utils";
 
 import {
   MessageAgent,
-  MessageDataObject,
+  MessageData,
   MessageValidator,
   MessageValidatorManager,
 } from "./interfaces";
@@ -11,7 +11,7 @@ import {
  * メッセージの暗号化と復号化を管理し、各コンテキスト間でのメッセージ通信を提供します。
  * Chrome拡張用実装。
  */
-export class ChromeMessageAgent<T extends MessageDataObject>
+export class ChromeMessageAgent<T extends MessageData>
   implements MessageAgent<T>
 {
   private windowListener?: (event: MessageEvent) => void;
@@ -58,10 +58,7 @@ export class ChromeMessageAgent<T extends MessageDataObject>
    * @param tabId 送信先タブの ID
    * @returns 相手からの応答
    */
-  async sendRuntimeMessage(
-    message: T,
-    tabId: number | undefined,
-  ): Promise<unknown> {
+  async sendRuntimeMessage(message: T, tabId?: number): Promise<unknown> {
     const latestValidator = this.getLatestValidator();
     const messageData = this.makeMessageData(message);
     const latestToken = this.getLatestToken();

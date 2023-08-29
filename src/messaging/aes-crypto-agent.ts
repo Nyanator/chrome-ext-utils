@@ -2,16 +2,14 @@ import CryptoJS from "crypto-js";
 
 import {
   CryptoAgent,
-  MessageDataObject,
+  MessageData,
   SessionStaticValueProvider,
 } from "./interfaces";
 
 /**
  * AESで暗号、復号化します。
  */
-export class AESCryptoAgent<T extends MessageDataObject>
-  implements CryptoAgent<T>
-{
+export class AESCryptoAgent<T extends MessageData> implements CryptoAgent<T> {
   /**
    * AESCryptoAgent クラスのインスタンスを初期化します。
    * @param keyProvider 暗号化の鍵を提供するオブジェクト

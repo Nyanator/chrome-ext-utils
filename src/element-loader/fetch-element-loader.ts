@@ -1,7 +1,12 @@
 import { loadResourceText } from "../utils/chrome-ext-utils";
 import { htmlTextToHtmlElement } from "../utils/dom-utils";
 
-import { ElementLoader, ElementSpecifier } from "./interfaces";
+import { EventHandlerManager } from "./event-handler-manager";
+import {
+  ElementLoader,
+  ElementSpecifier,
+  EventHandlerConfig,
+} from "./interfaces";
 
 /**
  * Elementをフェッチして型安全にロードします。
@@ -11,7 +16,11 @@ export class FetchElementLoader<
 > implements
     ElementLoader<{ [K in keyof Spec]: InstanceType<Spec[K]["elementType"]> }>
 {
-  elements = {} as { [K in keyof Spec]: InstanceType<Spec[K]["elementType"]> };
+  readonly elements = {} as {
+    [K in keyof Spec]: InstanceType<Spec[K]["elementType"]>;
+  };
+
+  private readonly eventHandlerManager = new EventHandlerManager();
 
   /**
    * FetchElementLoaderクラスのインスタンスを初期化します。
@@ -32,7 +41,6 @@ export class FetchElementLoader<
     const htmlElemnt = htmlTextToHtmlElement(htmlText);
 
     for (const key in this.spec) {
-      // エレメントを探す
       const elType = this.spec[key].elementType;
       const element = htmlElemnt.querySelector(this.spec[key].id);
 
@@ -47,5 +55,22 @@ export class FetchElementLoader<
         Spec[keyof Spec]["elementType"]
       >;
     }
+    return this;
+  }
+
+  /**
+   * 読み込んだElementにイベントハンドラーを一括設定
+   * @param configs イベントハンドラー設定のリスト
+   */
+  eventHandlers(configs: EventHandlerConfig[]) {
+    this.eventHandlerManager.addEventHandlers(configs, this.elements);
+    return this;
+  }
+
+  /**
+   * イベントハンドラーを一括で解除
+   */
+  removeAllEventHandlers() {
+    this.eventHandlerManager.removeAllEventHandlers();
   }
 }

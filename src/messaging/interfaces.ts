@@ -1,9 +1,9 @@
 /**
- * @file 暗号化メッセージパッシングクラスインターフェース
+ * @file メッセージパッシングクラスインターフェース
  */
 
 /** 暗号化、複合化 */
-export interface CryptoAgent<T extends MessageDataObject> {
+export interface CryptoAgent<T extends MessageData> {
   /**
    * 暗号化に使う鍵を提供するオブジェクトを返します。
    */
@@ -23,7 +23,7 @@ export interface CryptoAgent<T extends MessageDataObject> {
 }
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート */
-export interface MessageAgent<T extends MessageDataObject> {
+export interface MessageAgent<T extends MessageData> {
   /**
    * 暗号化されたメッセージを windowに送信します。
    * @param target 送信先の window
@@ -41,7 +41,7 @@ export interface MessageAgent<T extends MessageDataObject> {
    * @param message 送信するメッセージデータ
    * @param tabId 送信先タブの ID
    */
-  sendRuntimeMessage(message: T, tabId: number | undefined): Promise<unknown>;
+  sendRuntimeMessage(message: T, tabId?: number): Promise<unknown>;
 
   /**
    * ウィンドウメッセージを受信し、復号化してハンドラー関数に渡します。
@@ -67,7 +67,7 @@ export interface MessageAgent<T extends MessageDataObject> {
 }
 
 /** メッセージオブジェクト */
-export interface MessageDataObject {
+export interface MessageData {
   /**
    * 拡張機能のID。
    */
@@ -80,7 +80,7 @@ export interface MessageDataObject {
 }
 
 /** MessageValidatorを管理し、トークンを自動で更新 */
-export interface MessageValidatorManager<T extends MessageDataObject> {
+export interface MessageValidatorManager<T extends MessageData> {
   /**
    * 送信内容の検証をします。
    * @param origin 送信元オリジン
@@ -92,7 +92,7 @@ export interface MessageValidatorManager<T extends MessageDataObject> {
   /**
    * 管理下のValidatorを更新します。
    */
-  refreshValidator(): Promise<void>;
+  refreshValidators(): Promise<void>;
 
   /**
    * 管理下のValidatorのリストを返します。
@@ -101,7 +101,7 @@ export interface MessageValidatorManager<T extends MessageDataObject> {
 }
 
 /** メッセージの正当性を検証 */
-export interface MessageValidator<T extends MessageDataObject> {
+export interface MessageValidator<T extends MessageData> {
   /** 検証設定オブジェクトを返します。 */
   getConfig(): ValidatorConfig;
 
@@ -145,4 +145,9 @@ export interface ValidatorConfig {
    * 許可するオリジンの一覧。
    */
   readonly allowedOrigins: string[];
+}
+
+/** 直接メソッド呼び出しで通信可能なモジュール間をつなぐインターフェース */
+export interface MessageReceiver<T extends MessageData> {
+  receive(messageData: T): Promise<T>;
 }
