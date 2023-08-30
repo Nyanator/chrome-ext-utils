@@ -5,15 +5,27 @@
 /** 型付けされたデータと応答を持つイベント(継承して使用してください) */
 export interface TypedEventMap {
   [key: string]: {
-    readonly data: unknown;
-    readonly response: unknown;
+    readonly data: unknown | undefined;
+    readonly response: unknown | undefined;
   };
 }
 
+/** イベントデータの型 */
+export type EventData<
+  T extends TypedEventMap,
+  K extends keyof T,
+> = T[K]["data"];
+
+/** イベント応答の型 */
+export type EventResponse<
+  T extends TypedEventMap,
+  K extends keyof T,
+> = T[K]["response"];
+
 /** 型付けされたイベントハンドラ */
-export type TypedEventHandler<Data, Response> = (
-  data: Data,
-) => Response | Promise<Response>;
+export type TypedEventHandler<T extends TypedEventMap, K extends keyof T> = (
+  data: EventData<T, K>,
+) => EventResponse<T, K> | Promise<EventResponse<T, K>>;
 
 /**  型付けイベントディスパッチャー */
 export interface EventDispatcher<T extends TypedEventMap> {
@@ -22,7 +34,7 @@ export interface EventDispatcher<T extends TypedEventMap> {
    * @param handlers TypedEventMap
    */
   addEventHandlers<K extends keyof T>(handlers: {
-    [Key in K]: TypedEventHandler<T[Key]["data"], T[Key]["response"]>;
+    [Key in K]: TypedEventHandler<T, Key>;
   }): void;
 
   /**
@@ -33,8 +45,8 @@ export interface EventDispatcher<T extends TypedEventMap> {
    */
   dispatchEvent<K extends keyof T>(
     eventKey: K,
-    eventData: T[K]["data"],
-  ): Promise<T[K]["response"][]>;
+    eventData: EventData<T, K>,
+  ): Promise<EventResponse<T, K>[]>;
 
   /**
    * イベントハンドラーを登録解除します
@@ -43,7 +55,7 @@ export interface EventDispatcher<T extends TypedEventMap> {
    */
   removeHandler<K extends keyof T>(
     eventKey: K,
-    handlerToRemove: TypedEventHandler<T[K]["data"], T[K]["response"]>,
+    handlerToRemove: TypedEventHandler<T, K>,
   ): void;
 
   /**

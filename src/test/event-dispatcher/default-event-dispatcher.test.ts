@@ -94,27 +94,26 @@ describe("DefaultEventDispatcherクラス", () => {
 
   it("同期ハンドラと非同期ハンドラが混在しても同期的に実行されるため戻り値の順番は変わらない", async () => {
     const dispatcher = createEventDispatcher<TestEventMap>();
-    let incrementCounter = 0;
     dispatcher.addEventHandlers({
       event1: async () => {
-        return incrementCounter++;
+        return 1;
       },
     });
     dispatcher.addEventHandlers({
       event1: () => {
-        return incrementCounter++;
+        return 2;
       },
     });
     dispatcher.addEventHandlers({
       event1: async () => {
-        return incrementCounter++;
+        return 3;
       },
     });
 
     const responses = await dispatcher.dispatchEvent("event1", 1);
-    expect(responses[0]).toBe(0);
-    expect(responses[1]).toBe(1);
-    expect(responses[2]).toBe(2);
+    expect(responses[0]).toBe(1);
+    expect(responses[1]).toBe(2);
+    expect(responses[2]).toBe(3);
   });
 
   it("同じハンドラを複数回登録すると複数回呼ばれる", async () => {
