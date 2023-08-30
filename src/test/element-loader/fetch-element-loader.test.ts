@@ -72,7 +72,7 @@ describe("FetchElementLoaderクラス", () => {
 
     const loader = createFetchElementLoader(spec, "/path/to/resource.html");
     await loader.loadElements();
-    loader.eventHandlers([
+    loader.addEventHandlers([
       {
         element: "someButton",
         events: {
@@ -97,7 +97,7 @@ describe("FetchElementLoaderクラス", () => {
 
     const loader = createFetchElementLoader(spec, "/path/to/resource.html");
     await loader.loadElements();
-    loader.eventHandlers([
+    loader.addEventHandlers([
       {
         element: "someButton",
         events: {

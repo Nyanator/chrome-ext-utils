@@ -1,5 +1,5 @@
 /**
- * @file メッセージパッシングクラスインターフェース
+ * @file コンテキスト間メッセージパッシングクラスインターフェース
  */
 
 /** 暗号化、複合化 */
@@ -145,9 +145,4 @@ export interface ValidatorConfig {
    * 許可するオリジンの一覧。
    */
   readonly allowedOrigins: string[];
-}
-
-/** 直接メソッド呼び出しで通信可能なモジュール間をつなぐインターフェース */
-export interface MessageReceiver<T extends MessageData> {
-  receive(messageData: T): Promise<T>;
 }

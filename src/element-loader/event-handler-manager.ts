@@ -18,9 +18,6 @@ export class EventHandlerManager {
     configs: EventHandlerConfig[],
     elementsMap: { [key: string]: Element },
   ): void {
-    // 管理済みは解除
-    this.removeAllEventHandlers();
-
     configs.forEach((config) => {
       const element = elementsMap[config.element];
 

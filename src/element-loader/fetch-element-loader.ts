@@ -62,7 +62,7 @@ export class FetchElementLoader<
    * 読み込んだElementにイベントハンドラーを一括設定
    * @param configs イベントハンドラー設定のリスト
    */
-  eventHandlers(configs: EventHandlerConfig[]) {
+  addEventHandlers(configs: EventHandlerConfig[]) {
     this.eventHandlerManager.addEventHandlers(configs, this.elements);
     return this;
   }
