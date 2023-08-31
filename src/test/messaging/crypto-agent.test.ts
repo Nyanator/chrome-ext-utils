@@ -1,9 +1,7 @@
-import {
-  CryptoAgent,
-  MessageData,
-  SessionStaticKeyProvider,
-  createCryptoAgent,
-} from "../..";
+import { MessageData } from "../..";
+import { createCryptoAgent } from "../../encryption/factories";
+import { CryptoAgent } from "../../encryption/interfaces";
+import { SessionStaticKeyProvider } from "../../session/session-static-key-provider";
 import { assertNotNull } from "../../utils/ts-utils";
 import { mockMessageData } from "../mocks/mock-utils";
 

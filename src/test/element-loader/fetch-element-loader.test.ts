@@ -67,12 +67,12 @@ describe("FetchElementLoaderクラス", () => {
     typedLoaderParamTest(typedLoader);
   });
 
-  it("宣言的な記法でイベントハンドラの設定ができる", async () => {
+  it("宣言的な記法でリスナーの設定ができる", async () => {
     const handleClick = jest.fn();
 
     const loader = createFetchElementLoader(spec, "/path/to/resource.html");
     await loader.loadElements();
-    loader.addEventHandlers([
+    loader.addEventListeners([
       {
         element: "someButton",
         events: {
@@ -92,12 +92,12 @@ describe("FetchElementLoaderクラス", () => {
     expect(handleClick).toHaveBeenCalledTimes(2);
   });
 
-  it("イベントハンドラが削除できる", async () => {
+  it("リスナーが削除できる", async () => {
     const handleClick = jest.fn();
 
     const loader = createFetchElementLoader(spec, "/path/to/resource.html");
     await loader.loadElements();
-    loader.addEventHandlers([
+    loader.addEventListeners([
       {
         element: "someButton",
         events: {
@@ -105,7 +105,7 @@ describe("FetchElementLoaderクラス", () => {
         },
       },
     ]);
-    loader.removeAllEventHandlers();
+    loader.removeAllEventListeners();
 
     loader.elements.someButton.click();
     expect(handleClick).toHaveBeenCalledTimes(0);

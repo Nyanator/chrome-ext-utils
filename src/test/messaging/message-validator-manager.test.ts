@@ -1,12 +1,12 @@
 import { chrome } from "jest-chrome";
 
 import {
-  AESCryptoAgent,
-  CryptoAgent,
   MessageData,
   MessageValidatorManager,
   createMessageValidatorManager,
 } from "../../";
+import { AESCryptoAgent } from "../../encryption/aes-crypto-agent";
+import { CryptoAgent } from "../../encryption/interfaces";
 import * as MessageingFactories from "../../messaging/factories";
 import * as ChromeExtensionUtils from "../../utils/chrome-ext-utils";
 import * as MockUtils from "../mocks/mock-utils";

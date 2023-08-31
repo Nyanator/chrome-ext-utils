@@ -1,11 +1,11 @@
 import { loadResourceText } from "../utils/chrome-ext-utils";
 import { htmlTextToHtmlElement } from "../utils/dom-utils";
 
-import { EventHandlerManager } from "./event-handler-manager";
+import { EventListenerManager } from "./event-listener-manager";
 import {
   ElementLoader,
   ElementSpecifier,
-  EventHandlerConfig,
+  EventListenerConfig,
 } from "./interfaces";
 
 /**
@@ -20,7 +20,7 @@ export class FetchElementLoader<
     [K in keyof Spec]: InstanceType<Spec[K]["elementType"]>;
   };
 
-  private readonly eventHandlerManager = new EventHandlerManager();
+  private readonly eventListenerManager = new EventListenerManager();
 
   /**
    * FetchElementLoaderクラスのインスタンスを初期化します。
@@ -59,18 +59,18 @@ export class FetchElementLoader<
   }
 
   /**
-   * 読み込んだElementにイベントハンドラーを一括設定
-   * @param configs イベントハンドラー設定のリスト
+   * 読み込んだElementにリスナーを一括設定
+   * @param configs リスナー設定のリスト
    */
-  addEventHandlers(configs: EventHandlerConfig[]) {
-    this.eventHandlerManager.addEventHandlers(configs, this.elements);
+  addEventListeners(configs: EventListenerConfig[]) {
+    this.eventListenerManager.addEventListeners(configs, this.elements);
     return this;
   }
 
   /**
-   * イベントハンドラーを一括で解除
+   * リスナーを一括で解除
    */
-  removeAllEventHandlers() {
-    this.eventHandlerManager.removeAllEventHandlers();
+  removeAllEventListeners() {
+    this.eventListenerManager.removeAllEventListeners();
   }
 }

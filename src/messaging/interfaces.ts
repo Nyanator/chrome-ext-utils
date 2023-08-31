@@ -2,28 +2,32 @@
  * @file コンテキスト間メッセージパッシングクラスインターフェース
  */
 
-/** 暗号化、複合化 */
-export interface CryptoAgent<T extends MessageData> {
+import { CryptoAgent } from "encryption/interfaces";
+import { SessionStaticValueProvider } from "session/interfaces";
+
+/** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ランタイム) */
+export interface RuntimeMessageAgent<T extends MessageData> {
   /**
-   * 暗号化に使う鍵を提供するオブジェクトを返します。
+   * 暗号化されたランタイムメッセージを送信します。
+   * @param message 送信するメッセージデータ
+   * @param tabId 送信先タブの ID
    */
-  getProvider(): SessionStaticValueProvider;
+  sendRuntimeMessage(message: T, tabId?: number): Promise<unknown>;
 
   /**
-   * メッセージデータを暗号化します。
-   * @param messageData 暗号化するメッセージデータ
+   * ランタイムメッセージを受信し、復号化してリスナー関数に渡します。
+   * @param listener メッセージ受信時に呼び出されるリスナー関数
    */
-  encrypt(messageData: T): string;
+  runtimeMessageListener(listener: (messageData: T) => Promise<unknown>): void;
 
   /**
-   * 暗号化されたデータを複合化します。
-   * @param encryptedMessageData 暗号化されたデータの文字列
+   * ランタイムメッセージの購読を解除します。
    */
-  decrypt(encryptedMessageData: string): T;
+  removeRuntimeMessageListener(): void;
 }
 
-/** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート */
-export interface MessageAgent<T extends MessageData> {
+/** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ウィンドウ) */
+export interface WindowMessageAgent<T extends MessageData> {
   /**
    * 暗号化されたメッセージを windowに送信します。
    * @param target 送信先の window
@@ -37,33 +41,15 @@ export interface MessageAgent<T extends MessageData> {
   ): Promise<void>;
 
   /**
-   * 暗号化されたランタイムメッセージを送信します。
-   * @param message 送信するメッセージデータ
-   * @param tabId 送信先タブの ID
+   * ウィンドウメッセージを受信し、復号化してリスナー関数に渡します。
+   * @param listener メッセージ受信時に呼び出されるリスナー関数
    */
-  sendRuntimeMessage(message: T, tabId?: number): Promise<unknown>;
-
-  /**
-   * ウィンドウメッセージを受信し、復号化してハンドラー関数に渡します。
-   * @param handler メッセージ受信時に呼び出されるハンドラー関数
-   */
-  windowMessageListener(handler: (event: T) => void): void;
-
-  /**
-   * ランタイムメッセージを受信し、復号化してハンドラー関数に渡します。
-   * @param handler メッセージ受信時に呼び出されるハンドラー関数
-   */
-  runtimeMessageListener(handler: (messageData: T) => Promise<unknown>): void;
+  windowMessageListener(listener: (event: T) => void): void;
 
   /**
    * Windowメッセージの購読を解除します。
    */
   removeWindowMessageListener(): void;
-
-  /**
-   * ランタイムメッセージの購読を解除します。
-   */
-  removeRuntimeMessageListener(): void;
 }
 
 /** メッセージオブジェクト */
@@ -118,20 +104,6 @@ export interface MessageValidator<T extends MessageData> {
    * @returns メッセージデータ
    */
   isValid(origin: string, message: unknown): T | undefined;
-}
-
-/** セッションで静的な値 */
-export interface SessionStaticValueProvider {
-  /**
-   * 保持している値を返します。
-   */
-  getValue(): string;
-
-  /**
-   * セッションで静的な値を生成します。すでに生成されている場合は同じ値が返ります。
-   * @param regenerate すでに生成されている場合でも強制的に再生成する
-   */
-  generateValue(regenerate: boolean): Promise<string>;
 }
 
 /** メッセージの正当性の検証設定 */

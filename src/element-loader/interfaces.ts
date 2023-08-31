@@ -8,10 +8,10 @@ export interface ElementLoader<Elements extends { [key: string]: Element }> {
   readonly elements: Elements;
   /** Elementを読み込みます */
   loadElements(): Promise<this>;
-  /** 読み込んだElementにイベントハンドラーを一括設定 */
-  addEventHandlers(configs: EventHandlerConfig[]): this;
-  /** イベントハンドラーを一括で解除 */
-  removeAllEventHandlers(): void;
+  /** 読み込んだElementにリスナーを一括設定 */
+  addEventListeners(configs: EventListenerConfig[]): this;
+  /** リスナーを一括で解除 */
+  removeAllEventListeners(): void;
 }
 
 /** idを持つElemntのタイプ定義 */
@@ -28,8 +28,8 @@ export type ElementMap<Specs> = {
   [K in keyof Specs]: ExtractElement<Specs[K]>;
 };
 
-/** Elementへのハンドラーの設定を宣言的に行う設定 */
-export type EventHandlerConfig = {
+/** Elementへのリスナーの設定を宣言的に行う設定 */
+export type EventListenerConfig = {
   element: string;
   events: { [key: string]: EventListener };
 };

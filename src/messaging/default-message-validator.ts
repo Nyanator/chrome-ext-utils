@@ -1,10 +1,7 @@
-import {
-  CryptoAgent,
-  MessageData,
-  MessageValidator,
-  SessionStaticValueProvider,
-  ValidatorConfig,
-} from "./interfaces";
+import { CryptoAgent } from "../encryption/interfaces";
+import { SessionStaticValueProvider } from "../session/interfaces";
+
+import { MessageData, MessageValidator, ValidatorConfig } from "./interfaces";
 
 /**
  * メッセージの内容を検証します。

@@ -1,4 +1,5 @@
-import { SessionStaticKeyProvider, SessionStaticTokenProvider } from "../../";
+import { SessionStaticKeyProvider } from "../../session/session-static-key-provider";
+import { SessionStaticTokenProvider } from "../../session/session-static-token-provider";
 import * as MockUtils from "../mocks/mock-utils";
 
 describe("SessionStaticKeyProviderクラス", () => {

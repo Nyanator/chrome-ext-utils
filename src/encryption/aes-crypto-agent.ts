@@ -1,10 +1,8 @@
 import CryptoJS from "crypto-js";
 
-import {
-  CryptoAgent,
-  MessageData,
-  SessionStaticValueProvider,
-} from "./interfaces";
+import { CryptoAgent } from "../encryption/interfaces";
+import { MessageData } from "../messaging/interfaces";
+import { SessionStaticValueProvider } from "../session/interfaces";
 
 /**
  * AESで暗号、復号化します。

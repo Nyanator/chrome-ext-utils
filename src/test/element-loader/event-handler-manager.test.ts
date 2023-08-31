@@ -1,72 +1,76 @@
-import { EventHandlerManager } from "../../element-loader/event-handler-manager";
+import { EventListenerManager } from "../../element-loader/event-listener-manager";
 
-describe("EventHandlerManager クラス", () => {
-  let manager: EventHandlerManager;
+describe("EventListenerManager クラス", () => {
+  let manager: EventListenerManager;
   let element: HTMLElement;
   let anotherElement: HTMLElement;
-  let handler: jest.Mock;
-  let anotherHandler: jest.Mock;
+  let listener: jest.Mock;
+  let anotherListener: jest.Mock;
 
   beforeEach(() => {
-    manager = new EventHandlerManager();
+    manager = new EventListenerManager();
     element = document.createElement("div");
     anotherElement = document.createElement("span");
-    handler = jest.fn();
-    anotherHandler = jest.fn();
+    listener = jest.fn();
+    anotherListener = jest.fn();
   });
 
-  it("要素にイベントハンドラを追加できる", () => {
-    manager.addEventHandlers(
-      [{ element: "testElement", events: { click: handler } }],
-      { testElement: element },
+  it("要素にリスナーを追加できる", () => {
+    manager.addEventListeners(
+      [{ element: "testElement", events: { click: listener } }],
+      {
+        testElement: element,
+      },
     );
     element.click();
-    expect(handler).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it("すべてのイベントハンドラを削除できる", () => {
-    manager.addEventHandlers(
-      [{ element: "testElement", events: { click: handler } }],
-      { testElement: element },
+  it("すべてのリスナーを削除できる", () => {
+    manager.addEventListeners(
+      [{ element: "testElement", events: { click: listener } }],
+      {
+        testElement: element,
+      },
     );
-    manager.removeAllEventHandlers();
+    manager.removeAllEventListeners();
     element.click();
-    expect(handler).not.toHaveBeenCalled();
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it("1つの要素に対して複数のイベントタイプを処理できる", () => {
-    manager.addEventHandlers(
+    manager.addEventListeners(
       [
         {
           element: "testElement",
-          events: { click: handler, mousedown: anotherHandler },
+          events: { click: listener, mousedown: anotherListener },
         },
       ],
       { testElement: element },
     );
 
     element.click();
-    expect(handler).toHaveBeenCalledTimes(1);
-    expect(anotherHandler).not.toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(anotherListener).not.toHaveBeenCalled();
 
     element.dispatchEvent(new Event("mousedown"));
-    expect(anotherHandler).toHaveBeenCalledTimes(1);
+    expect(anotherListener).toHaveBeenCalledTimes(1);
   });
 
   it("複数の要素に対するイベントを処理できる", () => {
-    manager.addEventHandlers(
+    manager.addEventListeners(
       [
-        { element: "testElement", events: { click: handler } },
-        { element: "anotherTestElement", events: { click: anotherHandler } },
+        { element: "testElement", events: { click: listener } },
+        { element: "anotherTestElement", events: { click: anotherListener } },
       ],
       { testElement: element, anotherTestElement: anotherElement },
     );
 
     element.click();
-    expect(handler).toHaveBeenCalledTimes(1);
-    expect(anotherHandler).not.toHaveBeenCalled();
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(anotherListener).not.toHaveBeenCalled();
 
     anotherElement.click();
-    expect(anotherHandler).toHaveBeenCalledTimes(1);
+    expect(anotherListener).toHaveBeenCalledTimes(1);
   });
 });

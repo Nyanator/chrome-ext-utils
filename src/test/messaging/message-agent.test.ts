@@ -1,18 +1,22 @@
 import { chrome } from "jest-chrome";
 
 import {
-  DefaultMessageValidator,
-  MessageAgent,
   MessageData,
-  createMessageAgent,
+  RuntimeMessageAgent,
+  WindowMessageAgent,
+  createMessageValidatorManager,
+  createRuntimeMessageAgent,
+  createWindowMessageAgent,
 } from "../../";
-import * as cryptoAgentModule from "../../messaging/factories";
+import * as cryptoAgentModule from "../../encryption/factories";
+import { DefaultMessageValidator } from "../../messaging/default-message-validator";
 import * as MockUtils from "../mocks/mock-utils";
 
 describe.each([false, true])(
   "MessageAgentクラス 疎通テスト (暗号化: %s)",
   (isEncryptionEnabled) => {
-    let messageAgent: MessageAgent<MessageData>;
+    let runtimeMessageAgent: RuntimeMessageAgent<MessageData>;
+    let windowMssageAgent: WindowMessageAgent<MessageData>;
 
     MockUtils.mockAllSessionValues();
 
@@ -26,14 +30,19 @@ describe.each([false, true])(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .mockResolvedValue(cryptoAgent as any);
 
-      messageAgent = await createMessageAgent(MockUtils.mockValidatorConfig);
+      runtimeMessageAgent = await createRuntimeMessageAgent(
+        await createMessageValidatorManager(MockUtils.mockValidatorConfig),
+      );
+      windowMssageAgent = await createWindowMessageAgent(
+        await createMessageValidatorManager(MockUtils.mockValidatorConfig),
+      );
     });
 
     it("iframeから親ウィンドウへwindowメッセージを送受信できるか", async () => {
       await testWindowMessage(async () => {
         // iframeにいるものとして親へのpostMessageをモックする
         window.parent.postMessage = jest.fn();
-        await messageAgent.postWindowMessage(
+        await windowMssageAgent.postWindowMessage(
           window.parent,
           MockUtils.allowedOrigins[0],
           MockUtils.mockMessageData,
@@ -59,7 +68,7 @@ describe.each([false, true])(
 
       await testWindowMessage(async () => {
         // 親ウィンドウへいるものとしてiframeへのpostMessageをモックする
-        await messageAgent.postWindowMessage(
+        await windowMssageAgent.postWindowMessage(
           fakeIFrame.contentWindow as unknown as Window,
           MockUtils.allowedOrigins[1],
           MockUtils.mockMessageData,
@@ -88,7 +97,7 @@ describe.each([false, true])(
       // Promiseを使用して非同期のリスナー処理をラップ
       const messageReceived = new Promise<void>((resolve) => {
         // リスナーを設定
-        messageAgent.windowMessageListener((data) => {
+        windowMssageAgent.windowMessageListener((data) => {
           expect(data).toEqual(MockUtils.mockMessageData);
           resolve();
         });
@@ -114,7 +123,7 @@ describe.each([false, true])(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (chrome.runtime.sendMessage as any) = jest.fn();
 
-        await messageAgent.sendRuntimeMessage(
+        await runtimeMessageAgent.sendRuntimeMessage(
           MockUtils.mockMessageData,
           undefined,
         );
@@ -130,7 +139,10 @@ describe.each([false, true])(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (chrome.tabs.sendMessage as any) = jest.fn();
 
-        await messageAgent.sendRuntimeMessage(MockUtils.mockMessageData, 1);
+        await runtimeMessageAgent.sendRuntimeMessage(
+          MockUtils.mockMessageData,
+          1,
+        );
 
         // chrome.tabs.sendMessageを呼び出したときの引数を取り出す
         return (chrome.tabs.sendMessage as jest.Mock).mock.calls[0][1];
@@ -148,7 +160,7 @@ describe.each([false, true])(
     ): Promise<MessageData> {
       // Promiseを使用して非同期のリスナー処理をラップ
       const messageReceived = new Promise<MessageData>((resolve) => {
-        messageAgent.runtimeMessageListener(async (data) => {
+        runtimeMessageAgent.runtimeMessageListener(async (data) => {
           resolve(data);
         });
       });
@@ -169,7 +181,7 @@ describe.each([false, true])(
     }
 
     it("無効なランタイムメッセージを拒否するか", () => {
-      messageAgent.runtimeMessageListener(async () => {});
+      runtimeMessageAgent.runtimeMessageListener(async () => {});
 
       const isValidSpy = jest.spyOn(
         DefaultMessageValidator.prototype,
@@ -187,7 +199,7 @@ describe.each([false, true])(
     });
 
     it("無効なウィンドウメッセージを拒否するか", () => {
-      messageAgent.windowMessageListener(() => {});
+      windowMssageAgent.windowMessageListener(() => {});
 
       const isValidSpy = jest.spyOn(
         DefaultMessageValidator.prototype,
@@ -208,8 +220,8 @@ describe.each([false, true])(
     afterEach(() => {
       // 暗号化の有無を切り替える前にリスナーの購読を解除しないと必ず失敗するため
       // メソッドのテストを兼ねている
-      messageAgent.removeRuntimeMessageListener();
-      messageAgent.removeWindowMessageListener();
+      runtimeMessageAgent.removeRuntimeMessageListener();
+      windowMssageAgent.removeWindowMessageListener();
     });
   },
 );

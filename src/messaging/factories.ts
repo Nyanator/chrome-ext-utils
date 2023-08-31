@@ -2,50 +2,44 @@
  * @file 暗号化メッセージパッシングクラスファクトリ関数
  */
 
+import { createCryptoAgent } from "../encryption/factories";
+import { SessionStaticTokenProvider } from "../session/session-static-token-provider";
 import { isBackground } from "../utils/chrome-ext-utils";
 
-import { AESCryptoAgent } from "./aes-crypto-agent";
-import { ChromeMessageAgent } from "./chrome-message-agent";
+import { ChromeRuntimeMessageAgent } from "./chrome-runtime-message-agent";
 import { DefaultMessageValidatorManager } from "./default-message-validatior-manager";
 import { DefaultMessageValidator } from "./default-message-validator";
+import { DefaultWindowMessageAgent } from "./default-window-message-agent";
 import {
-  CryptoAgent,
-  MessageAgent,
   MessageData,
   MessageValidator,
   MessageValidatorManager,
+  RuntimeMessageAgent,
   ValidatorConfig,
+  WindowMessageAgent,
 } from "./interfaces";
-import { SessionStaticKeyProvider } from "./session-static-key-provider";
-import { SessionStaticTokenProvider } from "./session-static-token-provider";
 
 /**
- * CryptoAgentを生成します。
- * @returns CryptoAgent
+ * RuntimeMessageAgentを生成します。
+ * @param messageValidatorManager バリデーターマネージャー
+ * @returns MessageAgent
  */
-export const createCryptoAgent = async <T extends MessageData>(): Promise<
-  CryptoAgent<T>
-> => {
-  const keyProvider = new SessionStaticKeyProvider();
-  await keyProvider.generateValue(false);
-
-  const cryptoAgent = new AESCryptoAgent<T>(keyProvider);
-  return cryptoAgent;
+export const createRuntimeMessageAgent = async <T extends MessageData>(
+  messageValidatorManager: MessageValidatorManager<T>,
+): Promise<RuntimeMessageAgent<T>> => {
+  const messageAgent = new ChromeRuntimeMessageAgent(messageValidatorManager);
+  return messageAgent;
 };
 
 /**
- * MessageAgentを生成します。
- * @param config 検証設定
+ * WindowMessageAgentを生成します。
+ * @param messageValidatorManager バリデーターマネージャー
  * @returns MessageAgent
  */
-export const createMessageAgent = async <T extends MessageData>(
-  config: ValidatorConfig,
-): Promise<MessageAgent<T>> => {
-  const messageValidatorManager =
-    await createMessageValidatorManager<T>(config);
-
-  const messageAgent = new ChromeMessageAgent<T>(messageValidatorManager);
-
+export const createWindowMessageAgent = async <T extends MessageData>(
+  messageValidatorManager: MessageValidatorManager<T>,
+): Promise<WindowMessageAgent<T>> => {
+  const messageAgent = new DefaultWindowMessageAgent(messageValidatorManager);
   return messageAgent;
 };
 
@@ -104,7 +98,7 @@ export const createMessageValidator = async <T extends MessageData>(
   const tokenProvider = new SessionStaticTokenProvider();
   await tokenProvider.generateValue(false);
 
-  const messageValidator = new DefaultMessageValidator<T>(
+  const messageValidator = new DefaultMessageValidator(
     config,
     tokenProvider,
     cryptoAgent,

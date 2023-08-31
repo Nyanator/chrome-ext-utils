@@ -26,16 +26,15 @@ export class SessionStaticKeyProvider implements SessionStaticValueProvider {
     const startTime = await ChromeExtensionUtils.generateSessionStaticValue(
       "startTime",
       dateTimeNow,
-      regenerate
+      regenerate,
     );
     // 初期化ベクトルを読み込み、鍵を生成
     if (!this.aesInitial) {
-      this.aesInitial = await ChromeExtensionUtils.loadResourceText(
-        "cryptokey"
-      );
+      this.aesInitial =
+        await ChromeExtensionUtils.loadResourceText("cryptokey");
     }
     this.key = CryptoJS.SHA256(this.aesInitial + startTime).toString(
-      CryptoJS.enc.Base64
+      CryptoJS.enc.Base64,
     );
     return this.key;
   }

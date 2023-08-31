@@ -1,10 +1,7 @@
-import {
-  AESCryptoAgent,
-  CryptoAgent,
-  DefaultMessageValidator,
-  MessageData,
-  MessageValidator,
-} from "../../";
+import { MessageData, MessageValidator } from "../../";
+import { AESCryptoAgent } from "../../encryption/aes-crypto-agent";
+import { CryptoAgent } from "../../encryption/interfaces";
+import { DefaultMessageValidator } from "../../messaging/default-message-validator";
 import * as MockUtils from "../mocks/mock-utils";
 
 describe("MessageValidatorクラス", () => {

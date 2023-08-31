@@ -1,9 +1,7 @@
-import {
-  CryptoAgent,
-  MessageData,
-  SessionStaticKeyProvider,
-  SessionStaticTokenProvider,
-} from "../../";
+import { MessageData } from "../../";
+import { CryptoAgent } from "../../encryption/interfaces";
+import { SessionStaticKeyProvider } from "../../session/session-static-key-provider";
+import { SessionStaticTokenProvider } from "../../session/session-static-token-provider";
 
 export const runtimeId = "runtimeId";
 export const invalidRuntimeId = "invalidRuntimeId";
