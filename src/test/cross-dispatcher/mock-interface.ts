@@ -1,4 +1,4 @@
-import { TypedChannelMap } from "../../cross-dispatcher/interfaces";
+import { ChannelMap } from "../../cross-dispatcher/interfaces";
 
 export interface TestInterface {
   value: number;
@@ -8,7 +8,7 @@ export type TestType = {
   value: number;
 };
 
-export interface TestChannelMap extends TypedChannelMap {
+export interface TestChannelMap extends ChannelMap {
   channel1: {
     readonly data: number;
     readonly response: number;

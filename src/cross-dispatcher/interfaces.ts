@@ -3,7 +3,7 @@
  */
 
 /** 型付けされたデータと応答を持つチャンネル(継承して使用してください) */
-export interface TypedChannelMap {
+export interface ChannelMap {
   [key: string]: {
     readonly data: unknown | undefined;
     readonly response: unknown | undefined;
@@ -11,59 +11,56 @@ export interface TypedChannelMap {
 }
 
 /** チャンネルデータの型 */
-export type ChannelData<
-  T extends TypedChannelMap,
-  K extends keyof T,
-> = T[K]["data"];
+export type ChannelData<T extends ChannelMap, K extends keyof T> = T[K]["data"];
 
 /** チャンネル応答の型 */
 export type ChannelResponse<
-  T extends TypedChannelMap,
+  T extends ChannelMap,
   K extends keyof T,
 > = T[K]["response"];
 
 /** 型付けされたリスナー */
-export type ChannelListener<T extends TypedChannelMap, K extends keyof T> = (
+export type ChannelListener<T extends ChannelMap, K extends keyof T> = (
   data: ChannelData<T, K>,
 ) => ChannelResponse<T, K> | Promise<ChannelResponse<T, K>>;
 
-/**  チャンネルリスナーを管理するオブジェクト */
-export interface ChannelListenerManager<T extends TypedChannelMap> {
+/**  チャンネルリスナーのマップ */
+export interface ChannelListenerMap<T extends ChannelMap> {
   /**
    * チャンネルを開通します。
-   * @param listeners TypedChannelMap
+   * @param channelMap ChannelMap
    */
-  channel<K extends keyof T>(listeners: {
+  channel<K extends keyof T>(channelMap: {
     [Key in K]: ChannelListener<T, Key>;
   }): void;
   /**
    * リスナーを登録解除します。
    * @param channelKey 解除するチャンネルのキー
-   * @param listenerToRemove 解除したいリスナー
+   * @param removeTarget 解除したいリスナー
    */
-  removeListener<K extends keyof T>(
+  remove<K extends keyof T>(
     channelKey: K,
-    listenerToRemove: ChannelListener<T, K>,
+    removeTarget: ChannelListener<T, K>,
   ): void;
 
   /**
    * チャンネルに紐づく全てのリスナーを登録解除します。
    * @param channelKey 解除するチャンネルのキー
    */
-  removeAllListenersForChannel<K extends keyof T>(channelKey: K): void;
+  removeForChannel<K extends keyof T>(channelKey: K): void;
 
   /**
    * 全てのリスナーを登録解除します。
    */
-  clearAllListeners(): void;
+  clear(): void;
 
-  /** 全てのチャンネルのリスナーを取得する */
-  getAllChannelListeners(): Map<keyof T, ChannelListener<T, keyof T>[]>;
+  /** 全てのリスナーを取得する */
+  getListeners(): Map<keyof T, ChannelListener<T, keyof T>[]>;
 }
 
 /**  型付けされた相互通信チャンネル */
-export interface CrossDispatcher<T extends TypedChannelMap>
-  extends ChannelListenerManager<T> {
+export interface CrossDispatcher<T extends ChannelMap>
+  extends ChannelListenerMap<T> {
   /**
    * チャンネルに送信します。
    * @param channelKey ディスパッチするチャンネルのキー
