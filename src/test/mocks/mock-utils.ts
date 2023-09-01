@@ -1,7 +1,9 @@
-import { MessageData } from "../../";
-import { CryptoAgent } from "../../encryption/interfaces";
-import { SessionStaticKeyProvider } from "../../session/session-static-key-provider";
-import { SessionStaticTokenProvider } from "../../session/session-static-token-provider";
+import { CryptoAgent } from "../../crypto-agent";
+import { MessageData } from "../../message-validator";
+import {
+  SessionStaticKey,
+  SessionStaticToken,
+} from "../../session-static-value";
 
 export const runtimeId = "runtimeId";
 export const invalidRuntimeId = "invalidRuntimeId";
@@ -34,14 +36,14 @@ export const mockValidatorConfig = {
   allowedOrigins: allowedOrigins,
 };
 
-export const mockSessionStaticValueProvider = {
+export const mockSessionStaticValue = {
   getValue: jest.fn().mockReturnValue(provideVedalue),
   generateValue: jest.fn().mockReturnValue(provideVedalue),
 };
 
 export const mockMessageValidator = {
   getConfig: jest.fn().mockReturnValue(mockValidatorConfig),
-  getProvider: jest.fn().mockReturnValue(mockSessionStaticValueProvider),
+  getProvider: jest.fn().mockReturnValue(mockSessionStaticValue),
   getCryptoAgent: jest.fn().mockReturnValue(mockCryptoAgent),
   isValid: jest.fn(),
 };
@@ -110,18 +112,16 @@ export const initChromeSession = () => {
 
 export const mockAllSessionValues = () => {
   jest
-    .spyOn(SessionStaticKeyProvider.prototype, "generateValue")
+    .spyOn(SessionStaticKey.prototype, "generateValue")
     .mockResolvedValue(provideVedalue);
 
   jest
-    .spyOn(SessionStaticKeyProvider.prototype, "getValue")
+    .spyOn(SessionStaticKey.prototype, "getValue")
     .mockReturnValue(provideVedalue);
 
   jest
-    .spyOn(SessionStaticTokenProvider.prototype, "generateValue")
+    .spyOn(SessionStaticToken.prototype, "generateValue")
     .mockResolvedValue(token);
 
-  jest
-    .spyOn(SessionStaticTokenProvider.prototype, "getValue")
-    .mockReturnValue(token);
+  jest.spyOn(SessionStaticToken.prototype, "getValue").mockReturnValue(token);
 };
