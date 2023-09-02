@@ -6,5 +6,5 @@
 import { Logger } from "./logger";
 
 export interface InjectionConfig {
-  readonly logger?: Logger;
+    readonly logger?: Logger;
 }

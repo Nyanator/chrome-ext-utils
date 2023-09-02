@@ -9,63 +9,63 @@ import { assertNotNull } from "./utils/ts-utils";
 
 /** メッセージオブジェクト */
 export interface MessageData {
-  /**
-   * 拡張機能のID。
-   */
-  readonly runtimeId: string;
+    /**
+     * 拡張機能のID。
+     */
+    readonly runtimeId: string;
 
-  /**
-   * メッセージ本文。
-   */
-  readonly message: string;
+    /**
+     * メッセージ本文。
+     */
+    readonly message: string;
 }
 
 /** メッセージの正当性の検証設定 */
 export interface MessageValidatorConfig<T extends MessageData>
-  extends InjectionConfig {
-  /**
-   * 拡張機能のID。
-   */
-  readonly runtimeId: string;
+    extends InjectionConfig {
+    /**
+     * 拡張機能のID。
+     */
+    readonly runtimeId: string;
 
-  /**
-   * 許可するオリジンの一覧。
-   */
-  readonly allowedOrigins: string[];
+    /**
+     * 許可するオリジンの一覧。
+     */
+    readonly allowedOrigins: string[];
 
-  /**
-   * 暗号化、複合化設定
-   */
-  cryptoAgentConfig?: CryptoAgentConfig;
+    /**
+     * 暗号化、複合化設定
+     */
+    cryptoAgentConfig?: CryptoAgentConfig;
 
-  /**
-   * 暗号化、複合化オブジェクト
-   */
-  cryptoAgent?: CryptoAgent<T>;
+    /**
+     * 暗号化、複合化オブジェクト
+     */
+    cryptoAgent?: CryptoAgent<T>;
 
-  /**
-   * トークン発行オブジェクト
-   */
-  tokenProvider?: SessionStaticValue;
+    /**
+     * トークン発行オブジェクト
+     */
+    tokenProvider?: SessionStaticValue;
 }
 
 export interface MessageValidator<T extends MessageData> {
-  /** 検証設定オブジェクトを返します。 */
-  getConfig(): MessageValidatorConfig<T>;
+    /** 検証設定オブジェクトを返します。 */
+    getConfig(): MessageValidatorConfig<T>;
 
-  /** トークンを供給するオブジェクトを返します。 */
-  getProvider(): SessionStaticValue;
+    /** トークンを供給するオブジェクトを返します。 */
+    getProvider(): SessionStaticValue;
 
-  /** 暗号化に使うCrypotAgentオブジェクトを返します。 */
-  getCryptoAgent(): CryptoAgent<T> | undefined;
+    /** 暗号化に使うCrypotAgentオブジェクトを返します。 */
+    getCryptoAgent(): CryptoAgent<T> | undefined;
 
-  /**
-   * メッセージが正当か検証します。
-   * @param origin メッセージの送信元オリジン
-   * @param message 検証するメッセージ
-   * @returns メッセージデータ
-   */
-  isValid(arg: { origin: string; message: unknown }): T | undefined;
+    /**
+     * メッセージが正当か検証します。
+     * @param origin メッセージの送信元オリジン
+     * @param message 検証するメッセージ
+     * @returns メッセージデータ
+     */
+    isValid(arg: { origin: string; message: unknown }): T | undefined;
 }
 
 /**
@@ -73,88 +73,90 @@ export interface MessageValidator<T extends MessageData> {
  * @param config 構築設定
  */
 export const MessageValidator = async <T extends MessageData>(
-  config: MessageValidatorConfig<T>,
+    config: MessageValidatorConfig<T>,
 ): Promise<MessageValidator<T>> => {
-  // cryptoAgent と cryptoAgentConfig が同時に存在する場合、エラーをスロー
-  if (config.cryptoAgent && config.cryptoAgentConfig) {
-    throw new Error(
-      "Both cryptoAgent and cryptoAgentConfig cannot be provided at the same time.",
-    );
-  }
+    // cryptoAgent と cryptoAgentConfig が同時に存在する場合、エラーをスロー
+    if (config.cryptoAgent && config.cryptoAgentConfig) {
+        throw new Error(
+            "Both cryptoAgent and cryptoAgentConfig cannot be provided at the same time.",
+        );
+    }
 
-  let cryptoAgentInstance = config.cryptoAgent;
+    let cryptoAgentInstance = config.cryptoAgent;
 
-  // cryptoAgentConfig が存在し、cryptoAgent が存在しない場合
-  if (!cryptoAgentInstance && config.cryptoAgentConfig) {
-    cryptoAgentInstance = await CryptoAgent<T>(config.cryptoAgentConfig);
-  }
+    // cryptoAgentConfig が存在し、cryptoAgent が存在しない場合
+    if (!cryptoAgentInstance && config.cryptoAgentConfig) {
+        cryptoAgentInstance = await CryptoAgent<T>(config.cryptoAgentConfig);
+    }
 
-  const tokenProvider = config.tokenProvider || new SessionStaticToken();
-  await tokenProvider.generateValue(false);
+    const tokenProvider = config.tokenProvider || new SessionStaticToken();
+    await tokenProvider.generateValue(false);
 
-  const messageValidator = new MessageValidatorImpl<T>({
-    ...config,
-    cryptoAgent: cryptoAgentInstance,
-    tokenProvider,
-  });
+    const messageValidator = new MessageValidatorImpl<T>({
+        ...config,
+        cryptoAgent: cryptoAgentInstance,
+        tokenProvider,
+    });
 
-  return messageValidator;
+    return messageValidator;
 };
 
 class MessageValidatorImpl<T extends MessageData>
-  implements MessageValidator<T>
+    implements MessageValidator<T>
 {
-  constructor(private readonly config: MessageValidatorConfig<T>) {}
+    constructor(private readonly config: MessageValidatorConfig<T>) {}
 
-  getConfig() {
-    return this.config;
-  }
-
-  getProvider() {
-    return assertNotNull(this.config.tokenProvider);
-  }
-
-  getCryptoAgent() {
-    return this.config.cryptoAgent;
-  }
-
-  isValid(arg: { origin: string; message: unknown }): T | undefined {
-    // オリジンの検証
-    if (!this.config.allowedOrigins.includes(origin)) {
-      return;
+    getConfig() {
+        return this.config;
     }
 
-    if (typeof arg.message !== "object" || !arg.message) {
-      return;
+    getProvider() {
+        return assertNotNull(this.config.tokenProvider);
     }
 
-    // メッセージの型を明示的に定義
-    type TypedMessage = {
-      token?: string;
-      messageData?: string;
-    };
-
-    const typedMessage: TypedMessage = arg.message;
-    const invalidToken = assertNotNull(this.config.tokenProvider).getValue();
-
-    if (
-      !typedMessage.token ||
-      typedMessage.token !== invalidToken ||
-      typeof typedMessage.messageData !== "string"
-    ) {
-      return;
+    getCryptoAgent() {
+        return this.config.cryptoAgent;
     }
 
-    // 複合化して
-    const decryptedMessageData =
-      this.config.cryptoAgent?.decrypt(typedMessage.messageData) ??
-      JSON.parse(typedMessage.messageData);
+    isValid(arg: { origin: string; message: unknown }): T | undefined {
+        // オリジンの検証
+        if (!this.config.allowedOrigins.includes(arg.origin)) {
+            return;
+        }
 
-    // 必須項目を検証
-    if (decryptedMessageData.runtimeId !== this.config.runtimeId) {
-      return;
+        if (typeof arg.message !== "object" || !arg.message) {
+            return;
+        }
+
+        // メッセージの型を明示的に定義
+        type TypedMessage = {
+            token?: string;
+            messageData?: string;
+        };
+
+        const typedMessage: TypedMessage = arg.message;
+        const invalidToken = assertNotNull(
+            this.config.tokenProvider,
+        ).getValue();
+
+        if (
+            !typedMessage.token ||
+            typedMessage.token !== invalidToken ||
+            typeof typedMessage.messageData !== "string"
+        ) {
+            return;
+        }
+
+        // 複合化して
+        const decryptedMessageData =
+            this.config.cryptoAgent?.decrypt(typedMessage.messageData) ??
+            JSON.parse(typedMessage.messageData);
+
+        // 必須項目を検証
+        if (decryptedMessageData.runtimeId !== this.config.runtimeId) {
+            return;
+        }
+
+        return decryptedMessageData;
     }
-
-    return decryptedMessageData;
-  }
 }
