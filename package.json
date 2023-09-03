@@ -1,6 +1,6 @@
 {
   "name": "@nyanator/chrome-ext-utils",
-  "version": "0.21.8",
+  "version": "0.22.4",
   "description": "utility modules for chrome extension",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
