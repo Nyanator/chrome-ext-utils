@@ -17,13 +17,13 @@ export interface RuntimeMessageAgent<T extends MessageData> {
      * @param message 送信するメッセージデータ
      * @param tabId 送信先タブの ID
      */
-    sendMessage(arg: { message: T; tabId?: number }): Promise<unknown>;
+    sendMessage(arg: { message: T; tabId?: number }): Promise<T | void>;
 
     /**
      * ランタイムメッセージを受信し、復号化してリスナー関数に渡します。
      * @param listener メッセージ受信時に呼び出されるリスナー関数
      */
-    addListener(listener: (messageData: T) => Promise<unknown>): void;
+    addListener(listener: (messageData: T) => Promise<T | void>): void;
 
     /**
      * ランタイムメッセージの購読を解除します。
@@ -37,12 +37,12 @@ export interface RuntimeMessageAgentConfig<T extends MessageData>
     /**
      * メッセージの検証に使うバリデーターマネージャー
      */
-    messageValidatroManager?: MessageValidatorManager<T>;
+    messageValidatorManager?: MessageValidatorManager<T>;
 
     /**
      * バリデーターマネージャーの構築設定
      */
-    messageValidatroManagerConfig?: MessageValidatorManagerConfig<T>;
+    messageValidatorManagerConfig?: MessageValidatorManagerConfig<T>;
 }
 
 /**
@@ -52,25 +52,16 @@ export interface RuntimeMessageAgentConfig<T extends MessageData>
 export const RuntimeMessageAgent = async <T extends MessageData>(
     config: RuntimeMessageAgentConfig<T>,
 ): Promise<RuntimeMessageAgent<T>> => {
-    // messageValidatroManager と messageValidatroManagerConfig が同時に存在する場合、エラーをスロー
+    let messageValidatorManagerInstance = config.messageValidatorManager;
+    // messageValidatorManagerConfig が存在し、messageValidatorManagerInstance が存在しない場合
     if (
-        config.messageValidatroManager &&
-        config.messageValidatroManagerConfig
+        !messageValidatorManagerInstance &&
+        config.messageValidatorManagerConfig
     ) {
-        throw new Error(
-            "Both messageValidatroManager and messageValidatroManagerConfig cannot be provided at the same time.",
+        messageValidatorManagerInstance = await MessageValidatorManager<T>(
+            config.messageValidatorManagerConfig,
         );
-    }
-
-    let messageValidatroManagerInstance = config.messageValidatroManager;
-    // messageValidatroManagerConfig が存在し、messageValidatroManagerInstance が存在しない場合
-    if (
-        !messageValidatroManagerInstance &&
-        config.messageValidatroManagerConfig
-    ) {
-        messageValidatroManagerInstance = await MessageValidatorManager<T>(
-            config.messageValidatroManagerConfig,
-        );
+        config.messageValidatorManager = messageValidatorManagerInstance;
     }
 
     const messageAgent = new RuntimeMessageAgentImpl(config);
@@ -88,9 +79,9 @@ class RuntimeMessageAgentImpl<T extends MessageData>
 
     constructor(private readonly config: RuntimeMessageAgentConfig<T>) {}
 
-    async sendMessage(arg: { message: T; tabId?: number }): Promise<unknown> {
+    async sendMessage(arg: { message: T; tabId?: number }): Promise<T | void> {
         const latestValidator = assertNotNull(
-            this.config.messageValidatroManager,
+            this.config.messageValidatorManager,
         )
             .getValidators()
             .slice(-1)[0];
@@ -114,7 +105,7 @@ class RuntimeMessageAgentImpl<T extends MessageData>
         });
     }
 
-    addListener(listener: (messageData: T) => Promise<unknown>): void {
+    addListener(listener: (messageData: T) => Promise<T | void>): void {
         this.removeListener();
 
         this.runtimeListener = (
@@ -126,7 +117,7 @@ class RuntimeMessageAgentImpl<T extends MessageData>
             (async () => {
                 const senderOrigin = assertNotNull(sender.origin);
                 const messageData = await assertNotNull(
-                    this.config.messageValidatroManager,
+                    this.config.messageValidatorManager,
                 ).processValidation({
                     origin: senderOrigin,
                     message: message,

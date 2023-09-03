@@ -42,12 +42,12 @@ export interface WindowMessageAgentConfig<T extends MessageData>
     /**
      * メッセージの検証に使うバリデーターマネージャー
      */
-    messageValidatroManager?: MessageValidatorManager<T>;
+    messageValidatorManager?: MessageValidatorManager<T>;
 
     /**
      * バリデーターマネージャーの構築設定
      */
-    messageValidatroManagerConfig?: MessageValidatorManagerConfig<T>;
+    messageValidatorManagerConfig?: MessageValidatorManagerConfig<T>;
 }
 
 /**
@@ -57,25 +57,16 @@ export interface WindowMessageAgentConfig<T extends MessageData>
 export const WindowMessageAgent = async <T extends MessageData>(
     config: WindowMessageAgentConfig<T>,
 ): Promise<WindowMessageAgent<T>> => {
-    // messageValidatroManager と messageValidatroManagerConfig が同時に存在する場合、エラーをスロー
+    let messageValidatorManagerInstance = config.messageValidatorManager;
+    // messageValidatorManagerConfig が存在し、messageValidatorManagerInstance が存在しない場合
     if (
-        config.messageValidatroManager &&
-        config.messageValidatroManagerConfig
+        !messageValidatorManagerInstance &&
+        config.messageValidatorManagerConfig
     ) {
-        throw new Error(
-            "Both messageValidatroManager and messageValidatroManagerConfig cannot be provided at the same time.",
+        messageValidatorManagerInstance = await MessageValidatorManager<T>(
+            config.messageValidatorManagerConfig,
         );
-    }
-
-    let messageValidatroManagerInstance = config.messageValidatroManager;
-    // messageValidatroManagerConfig が存在し、messageValidatroManagerInstance が存在しない場合
-    if (
-        !messageValidatroManagerInstance &&
-        config.messageValidatroManagerConfig
-    ) {
-        messageValidatroManagerInstance = await MessageValidatorManager<T>(
-            config.messageValidatroManagerConfig,
-        );
+        config.messageValidatorManager = messageValidatorManagerInstance;
     }
 
     const messageAgent = new WindowMessageAgentImpl(config);
@@ -95,7 +86,7 @@ class WindowMessageAgentImpl<T extends MessageData>
         message: T;
     }): Promise<void> {
         const latestValidator = assertNotNull(
-            this.config.messageValidatroManager,
+            this.config.messageValidatorManager,
         )
             .getValidators()
             .slice(-1)[0];
@@ -119,7 +110,7 @@ class WindowMessageAgentImpl<T extends MessageData>
 
         this.windowListener = async (event: MessageEvent) => {
             const messageData = await assertNotNull(
-                this.config.messageValidatroManager,
+                this.config.messageValidatorManager,
             ).processValidation({
                 origin: event.origin,
                 message: event.data,

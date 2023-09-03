@@ -61,7 +61,7 @@ export const MessageValidatorManager = async <T extends MessageData>(
 
     if (isBackground()) {
         chrome.alarms.create("refreshSession", {
-            periodInMinutes: config.validatorRefreshInterval,
+            periodInMinutes: config?.validatorRefreshInterval ?? 1,
         });
         chrome.alarms.onAlarm.addListener(() => {
             messageValidatorManager.refreshValidators();

@@ -75,28 +75,18 @@ export interface MessageValidator<T extends MessageData> {
 export const MessageValidator = async <T extends MessageData>(
     config: MessageValidatorConfig<T>,
 ): Promise<MessageValidator<T>> => {
-    // cryptoAgent と cryptoAgentConfig が同時に存在する場合、エラーをスロー
-    if (config.cryptoAgent && config.cryptoAgentConfig) {
-        throw new Error(
-            "Both cryptoAgent and cryptoAgentConfig cannot be provided at the same time.",
-        );
-    }
-
     let cryptoAgentInstance = config.cryptoAgent;
-
     // cryptoAgentConfig が存在し、cryptoAgent が存在しない場合
     if (!cryptoAgentInstance && config.cryptoAgentConfig) {
         cryptoAgentInstance = await CryptoAgent<T>(config.cryptoAgentConfig);
     }
+    config.cryptoAgent = cryptoAgentInstance;
 
     const tokenProvider = config.tokenProvider || new SessionStaticToken();
     await tokenProvider.generateValue(false);
+    config.tokenProvider = tokenProvider;
 
-    const messageValidator = new MessageValidatorImpl<T>({
-        ...config,
-        cryptoAgent: cryptoAgentInstance,
-        tokenProvider,
-    });
+    const messageValidator = new MessageValidatorImpl<T>(config);
 
     return messageValidator;
 };

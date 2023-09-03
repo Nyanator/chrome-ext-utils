@@ -5,10 +5,10 @@
  * @returns 非nullableな値
  */
 export const assertNotNull = function <T>(value: T | null | undefined): T {
-  if (value === null || value === undefined) {
-    throw new ReferenceError();
-  }
-  return value;
+    if (value === null || value === undefined) {
+        throw new ReferenceError();
+    }
+    return value;
 };
 
 /**
@@ -19,8 +19,8 @@ export const assertNotNull = function <T>(value: T | null | undefined): T {
  * @param value 設定する値
  */
 export const uniqueSet = <K, V>(map: Map<K, V>, key: K, value: V): void => {
-  if (map.has(key)) {
-    throw new Error(`Duplicate set for key: ${key}`);
-  }
-  map.set(key, value);
+    if (map.has(key)) {
+        throw new Error(`Duplicate set for key: ${key}`);
+    }
+    map.set(key, value);
 };

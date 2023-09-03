@@ -26,21 +26,6 @@ describe("MessageValidatorクラス", () => {
         mockValidMessage = MockUtils.createMockValidMessage(cryptoAgent);
     });
 
-    it("構築設定が矛盾している時例外が発生する", async () => {
-        await expect(async () => {
-            await MessageValidator<MessageData>({
-                cryptoAgent: await CryptoAgent({
-                    keyProvider: MockUtils.mockSessionStaticValue,
-                }),
-                cryptoAgentConfig: {
-                    keyProvider: MockUtils.mockSessionStaticValue,
-                },
-                runtimeId: "",
-                allowedOrigins: [],
-            });
-        }).rejects.toThrow();
-    });
-
     it("正しくMessageValidatorが構築される", async () => {
         await MessageValidator<MessageData>({
             cryptoAgentConfig: {
@@ -141,11 +126,11 @@ describe("MessageValidatorクラス", () => {
             tokenProvider: MockUtils.mockSessionStaticValue,
             cryptoAgent: undefined,
         });
-        expect(() => {
+        expect(
             rawValidator.isValid({
                 origin: MockUtils.mockValidatorConfig.allowedOrigins[0],
                 message: MockUtils.rawValidMessage,
-            });
-        }).toBeTruthy();
+            }),
+        ).toBeTruthy();
     });
 });

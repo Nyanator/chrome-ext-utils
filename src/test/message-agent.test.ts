@@ -1,7 +1,6 @@
 import { chrome } from "jest-chrome";
 
 import * as CryptoAgent from "../crypto-agent";
-import { MessageValidatorManager } from "../message-validatior-manager";
 import * as MessageValidator from "../message-validator";
 import { RuntimeMessageAgent } from "../runtime-message-agent";
 import { WindowMessageAgent } from "../window-message-agent";
@@ -26,15 +25,19 @@ describe.each([false, true])(
                 .mockResolvedValue(cryptoAgent as any);
 
             runtimeMessageAgent = await RuntimeMessageAgent({
-                messageValidatroManager: await MessageValidatorManager({
-                    messageValidatorConfig: MockUtils.mockValidatorConfig,
-                }),
+                messageValidatorManagerConfig: {
+                    messageValidatorConfig: {
+                        ...MockUtils.mockValidatorConfig,
+                    },
+                },
             });
 
             windowMssageAgent = await WindowMessageAgent({
-                messageValidatroManager: await MessageValidatorManager({
-                    messageValidatorConfig: MockUtils.mockValidatorConfig,
-                }),
+                messageValidatorManagerConfig: {
+                    messageValidatorConfig: {
+                        ...MockUtils.mockValidatorConfig,
+                    },
+                },
             });
         });
 
