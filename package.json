@@ -34,6 +34,8 @@
     "jest-chrome": "^0.8.0",
     "jest-environment-jsdom": "^27.0.0",
     "prettier-plugin-sort-json": "^3.0.0",
+    "reflect-metadata": "^0.1.13",
+    "tsyringe": "^4.8.0",
     "typedoc": "^0.25.0",
     "typescript": "^4.9.5"
   },

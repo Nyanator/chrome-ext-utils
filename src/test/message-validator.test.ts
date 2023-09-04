@@ -1,5 +1,10 @@
-import { CryptoAgent } from "../crypto-agent";
-import { MessageData, MessageValidator } from "../message-validator";
+import { container } from "tsyringe";
+import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
+import {
+    MessageData,
+    MessageValidator,
+    MessageValidatorImpl,
+} from "../message-validator";
 
 import * as MockUtils from "./mocks/mock-utils";
 
@@ -13,27 +18,36 @@ describe("MessageValidatorクラス", () => {
     MockUtils.initChromeSession();
 
     beforeEach(async () => {
-        cryptoAgent = await CryptoAgent<MessageData>({
-            keyProvider: MockUtils.mockSessionStaticValue,
+        container.clearInstances();
+
+        container.register("SessionStaticToken", {
+            useValue: MockUtils.mockSessionStaticValue,
         });
 
-        validator = await MessageValidator({
-            ...MockUtils.mockValidatorConfig,
-            cryptoAgent: cryptoAgent,
-            tokenProvider: MockUtils.mockSessionStaticValue,
+        container.register("SessionStaticKey", {
+            useValue: MockUtils.mockSessionStaticValue,
         });
 
+        container.register("MessageValidatorConfig", {
+            useValue: MockUtils.mockValidatorConfig,
+        });
+
+        container.register<CryptoAgent<MessageData>>("CryptoAgent", {
+            useClass: AESCryptoAgent<MessageData>,
+        });
+
+        cryptoAgent =
+            container.resolve<CryptoAgent<MessageData>>("CryptoAgent");
+
+        container.register<MessageValidator<MessageData>>("MessageValidator", {
+            useClass: MessageValidatorImpl,
+        });
+
+        validator =
+            container.resolve<MessageValidator<MessageData>>(
+                "MessageValidator",
+            );
         mockValidMessage = MockUtils.createMockValidMessage(cryptoAgent);
-    });
-
-    it("正しくMessageValidatorが構築される", async () => {
-        await MessageValidator<MessageData>({
-            cryptoAgentConfig: {
-                keyProvider: MockUtils.mockSessionStaticValue,
-            },
-            runtimeId: "",
-            allowedOrigins: [],
-        });
     });
 
     it("正しいoriginとメッセージが検証を通過する", () => {
@@ -103,15 +117,17 @@ describe("MessageValidatorクラス", () => {
 
     it("異なる暗号化キーで作成されたデータが検証を通過しない", async () => {
         const diffrentKey = "diffrent key";
-        const differentCryptoAgent = await CryptoAgent<MessageData>({
-            keyProvider: {
+        container.register("SessionStaticKey", {
+            useValue: {
                 getValue: () => diffrentKey,
                 generateValue: async () => diffrentKey,
             },
         });
+        const differentCryptoAgent =
+            container.resolve<CryptoAgent<MessageData>>("CryptoAgent");
+
         const diffrentKeyMessage =
             MockUtils.createMockValidMessage(differentCryptoAgent);
-
         expect(() => {
             validator.isValid({
                 origin: MockUtils.mockValidatorConfig.allowedOrigins[0],
@@ -121,11 +137,13 @@ describe("MessageValidatorクラス", () => {
     });
 
     it("CryptoAgentを使用しない時、正しいOriginとメッセージが検証を通過する", async () => {
-        const rawValidator = await MessageValidator({
-            ...MockUtils.mockValidatorConfig,
-            tokenProvider: MockUtils.mockSessionStaticValue,
-            cryptoAgent: undefined,
+        container.register("CryptoAgent", {
+            useValue: undefined,
         });
+        const rawValidator =
+            container.resolve<MessageValidator<MessageData>>(
+                "MessageValidator",
+            );
         expect(
             rawValidator.isValid({
                 origin: MockUtils.mockValidatorConfig.allowedOrigins[0],

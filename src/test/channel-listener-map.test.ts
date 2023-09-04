@@ -1,10 +1,10 @@
-import { ChannelListenerMap } from "../channel-listener-map";
+import { ChanneListenerMapImpl } from "../channel-listener-map";
 
 import { TestChannelMap, TestInterface, TestType } from "./mock-interface";
 
 describe("ChannelListenerMap クラス", () => {
     it("正しくリスナーを登録できる", async () => {
-        const map = ChannelListenerMap();
+        const map = new ChanneListenerMapImpl();
         const channelListener = () => {};
 
         map.channel({
@@ -15,7 +15,7 @@ describe("ChannelListenerMap クラス", () => {
     });
 
     it("リスナーを正しく解除できる", () => {
-        const map = ChannelListenerMap();
+        const map = new ChanneListenerMapImpl();
         const channelListener = () => {};
 
         map.channel({
@@ -28,7 +28,7 @@ describe("ChannelListenerMap クラス", () => {
     });
 
     it("登録されていないリスナーを解除しても何も起きない", () => {
-        const map = ChannelListenerMap();
+        const map = new ChanneListenerMapImpl();
         const channelListener = () => {};
         const unRegisterdchannelListener = () => {};
 
@@ -43,7 +43,7 @@ describe("ChannelListenerMap クラス", () => {
     });
 
     it("チャンネルキーに紐づくリスナーを全て解除できる", () => {
-        const map = ChannelListenerMap();
+        const map = new ChanneListenerMapImpl();
 
         map.channel({
             channel1: () => {},
@@ -58,7 +58,7 @@ describe("ChannelListenerMap クラス", () => {
     });
 
     it("全てのリスナーを解除できる", () => {
-        const map = ChannelListenerMap();
+        const map = new ChanneListenerMapImpl();
 
         map.channel({
             channel1: () => {},
@@ -71,7 +71,7 @@ describe("ChannelListenerMap クラス", () => {
 
     /* eslint-disable */
     it("リスナーの型推論が働いているか", async () => {
-        const map = ChannelListenerMap<TestChannelMap>();
+        const map = new ChanneListenerMapImpl<TestChannelMap>();
         // 型推論が働けばコンパイルが通る
         map.channel({
             channel1: (_data: number) => {

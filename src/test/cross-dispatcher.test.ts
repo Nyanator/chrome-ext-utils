@@ -1,10 +1,31 @@
-import { CrossDispatcher } from "../cross-dispathcher";
-
+import { container } from "tsyringe";
+import { ChanneListenerMapImpl, ChannelMap } from "../channel-listener-map";
+import {
+    CrossDispatcher,
+    CrossDispatcherConfig,
+    CrossDispatcherImpl,
+} from "../cross-dispathcher";
 import { TestChannelMap, TestInterface, TestType } from "./mock-interface";
 
 describe("CrossDispatcherクラス", () => {
+    beforeEach(() => {
+        container.clearInstances();
+
+        container.register("ChannelListenerMap", {
+            useClass: ChanneListenerMapImpl<TestChannelMap>,
+        });
+
+        container.register<CrossDispatcher<TestChannelMap>>("CrossDispatcher", {
+            useClass: CrossDispatcherImpl<TestChannelMap>,
+        });
+    });
+
     it("正しくリスナーを登録できる", async () => {
-        const dispatcher = CrossDispatcher<TestChannelMap>();
+        const dispatcher =
+            container.resolve<CrossDispatcher<TestChannelMap>>(
+                "CrossDispatcher",
+            );
+
         const channelData = 1;
         let listenerCalled = false;
 
@@ -28,7 +49,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("複数のチャンネルキーをディスパッチできる", async () => {
-        const dispatcher = CrossDispatcher();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         const channelData = "1";
         const listenerCalled: boolean[] = [false, false, false];
 
@@ -62,7 +84,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("複数のリスナーが登録されているときディスパッチしたキーだけが反応する", async () => {
-        const dispatcher = CrossDispatcher();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         const channelData = "1";
         const listenerCalled: boolean[] = [false, false, false];
 
@@ -88,7 +111,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("非同期リスナー内でawaitしてもデッドロックしない", async () => {
-        const dispatcher = CrossDispatcher();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         const channelData = 1;
         let listener1Called = false;
         let listener2Called = false;
@@ -116,7 +140,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("同期リスナーと非同期リスナーが混在しても同期的に実行されるため戻り値の順番は変わらない", async () => {
-        const dispatcher = CrossDispatcher<TestChannelMap>();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         dispatcher.channel({
             channel1: async () => {
                 return 1;
@@ -143,7 +168,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("同じリスナーを複数回登録すると複数回呼ばれる", async () => {
-        const dispatcher = CrossDispatcher<TestChannelMap>();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         let incrementCounter = 0;
         const listener = async () => {
             return incrementCounter++;
@@ -168,7 +194,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("同一のチャンネルキーをディスパッチできる", async () => {
-        const dispatcher = CrossDispatcher();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         const channelData = "1";
         const listenerCalled: boolean[] = [false, false, false];
 
@@ -198,9 +225,12 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("strictModeが無効な場合、再起呼び出しの際に空の配列を返す", async () => {
-        const dispatcher = CrossDispatcher<TestChannelMap>({
-            strictMode: false,
+        container.register<CrossDispatcherConfig>("CrossDispatcherConfig", {
+            useValue: { strictMode: false },
         });
+
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
 
         dispatcher.channel({
             channel1: async () => {
@@ -232,9 +262,12 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("strictModeが有効な場合、再起呼び出しの際に例外が発生する", async () => {
-        const dispatcher = CrossDispatcher<TestChannelMap>({
-            strictMode: true,
+        container.register<CrossDispatcherConfig>("CrossDispatcherConfig", {
+            useValue: { strictMode: true },
         });
+
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
 
         dispatcher.channel({
             channel1: async () => {
@@ -266,7 +299,12 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("strictModeが無効な場合、購読されていないイベントのディスパッチには空の配列を返す", async () => {
-        const dispatcher = CrossDispatcher();
+        container.register<CrossDispatcherConfig>("CrossDispatcherConfig", {
+            useValue: { strictMode: false },
+        });
+
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         const responses = await dispatcher.dispatch({
             channelKey: "nonExistentchannel",
             channelData: {},
@@ -275,7 +313,12 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("strictModeが無効な場合、非同期リスナーが例外をスローしても握りつぶす", async () => {
-        const dispatcher = CrossDispatcher();
+        container.register<CrossDispatcherConfig>("CrossDispatcherConfig", {
+            useValue: { strictMode: false },
+        });
+
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         dispatcher.channel({
             channel1: async () => {
                 throw new Error("Test error");
@@ -290,7 +333,12 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("strictModeが無効な場合、同期的なリスナーが例外をスローしても握りつぶす", async () => {
-        const dispatcher = CrossDispatcher();
+        container.register<CrossDispatcherConfig>("CrossDispatcherConfig", {
+            useValue: { strictMode: false },
+        });
+
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         dispatcher.channel({
             channel1: () => {
                 throw new Error("Test error");
@@ -305,7 +353,12 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("strictModeが有効な場合、存在しないイベントのディスパッチには例外をスローする", async () => {
-        const dispatcher = CrossDispatcher({ strictMode: true });
+        container.register<CrossDispatcherConfig>("CrossDispatcherConfig", {
+            useValue: { strictMode: true },
+        });
+
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
 
         await expect(
             dispatcher.dispatch({
@@ -316,7 +369,12 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("strictModeが有効な場合、非同期リスナーが例外をスローすると再スローされる", async () => {
-        const dispatcher = CrossDispatcher({ strictMode: true });
+        container.register<CrossDispatcherConfig>("CrossDispatcherConfig", {
+            useValue: { strictMode: true },
+        });
+
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
 
         dispatcher.channel({
             channel1: async () => {
@@ -330,7 +388,12 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("strictModeが有効な場合、同期的なリスナーが例外をスローすると再スローされる", async () => {
-        const dispatcher = CrossDispatcher({ strictMode: true });
+        container.register<CrossDispatcherConfig>("CrossDispatcherConfig", {
+            useValue: { strictMode: true },
+        });
+
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
 
         dispatcher.channel({
             channel1: () => {
@@ -344,7 +407,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("リスナーを正しく解除できる", () => {
-        const dispatcher = CrossDispatcher();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         let listenerCalled = false;
         const channelListener = () => {
             listenerCalled = true;
@@ -363,7 +427,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("登録されていないリスナーを解除しても何も起きない", () => {
-        const dispatcher = CrossDispatcher();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         let listenerCalled = false;
         const channelListener = () => {
             listenerCalled = true;
@@ -383,7 +448,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("チャンネルキーに紐づくリスナーを全て解除できる", () => {
-        const dispatcher = CrossDispatcher();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         let listenerCalled = false;
 
         dispatcher.channel({
@@ -404,7 +470,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     it("全てのリスナーを解除できる", () => {
-        const dispatcher = CrossDispatcher();
+        const dispatcher =
+            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         let listener1Called = false;
         let listener2Called = false;
 
@@ -426,7 +493,10 @@ describe("CrossDispatcherクラス", () => {
 
     /* eslint-disable */
     it("ディスパッチの型推論が働いているか", async () => {
-        const dispatcher = CrossDispatcher<TestChannelMap>();
+        const dispatcher =
+            container.resolve<CrossDispatcher<TestChannelMap>>(
+                "CrossDispatcher",
+            );
         // 型推論が働けばコンパイルが通る
         const numbers: number[] = await dispatcher.dispatch({
             channelKey: "channel1",

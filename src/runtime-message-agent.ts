@@ -1,14 +1,13 @@
 /**
  * メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ランタイム)
  */
-
-import { InjectionConfig } from "./injection-config";
-import {
-    MessageValidatorManager,
-    MessageValidatorManagerConfig,
-} from "./message-validatior-manager";
+import { Logger } from "logger";
+import { MessageValidatorManager } from "message-validatior-manager";
+import "reflect-metadata";
+import { inject, injectable } from "tsyringe";
 import { MessageData } from "./message-validator";
 import { assertNotNull } from "./utils/ts-utils";
+import { injectOptional } from "./utils/tsyringe-utils";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ランタイム) */
 export interface RuntimeMessageAgent<T extends MessageData> {
@@ -31,44 +30,8 @@ export interface RuntimeMessageAgent<T extends MessageData> {
     removeListener(): void;
 }
 
-/** 構築設定 */
-export interface RuntimeMessageAgentConfig<T extends MessageData>
-    extends InjectionConfig {
-    /**
-     * メッセージの検証に使うバリデーターマネージャー
-     */
-    messageValidatorManager?: MessageValidatorManager<T>;
-
-    /**
-     * バリデーターマネージャーの構築設定
-     */
-    messageValidatorManagerConfig?: MessageValidatorManagerConfig<T>;
-}
-
-/**
- * ファクトリ関数
- * @param config 構築設定
- */
-export const RuntimeMessageAgent = async <T extends MessageData>(
-    config: RuntimeMessageAgentConfig<T>,
-): Promise<RuntimeMessageAgent<T>> => {
-    let messageValidatorManagerInstance = config.messageValidatorManager;
-    // messageValidatorManagerConfig が存在し、messageValidatorManagerInstance が存在しない場合
-    if (
-        !messageValidatorManagerInstance &&
-        config.messageValidatorManagerConfig
-    ) {
-        messageValidatorManagerInstance = await MessageValidatorManager<T>(
-            config.messageValidatorManagerConfig,
-        );
-        config.messageValidatorManager = messageValidatorManagerInstance;
-    }
-
-    const messageAgent = new RuntimeMessageAgentImpl(config);
-    return messageAgent;
-};
-
-class RuntimeMessageAgentImpl<T extends MessageData>
+@injectable()
+export class RuntimeMessageAgentImpl<T extends MessageData>
     implements RuntimeMessageAgent<T>
 {
     private runtimeListener?: (
@@ -77,14 +40,15 @@ class RuntimeMessageAgentImpl<T extends MessageData>
         sendResponse: (response?: unknown) => void,
     ) => void;
 
-    constructor(private readonly config: RuntimeMessageAgentConfig<T>) {}
+    constructor(
+        @inject("MessageValidatorManager")
+        private readonly validatorManager: MessageValidatorManager<T>,
+        @injectOptional("Logger") private readonly logger?: Logger,
+    ) {}
 
     async sendMessage(arg: { message: T; tabId?: number }): Promise<T | void> {
-        const latestValidator = assertNotNull(
-            this.config.messageValidatorManager,
-        )
-            .getValidators()
-            .slice(-1)[0];
+        const latestValidator =
+            await this.validatorManager.getLatestValidator();
 
         const cryptoAgent = latestValidator.getCryptoAgent();
         const messageData =
@@ -117,7 +81,7 @@ class RuntimeMessageAgentImpl<T extends MessageData>
             (async () => {
                 const senderOrigin = assertNotNull(sender.origin);
                 const messageData = await assertNotNull(
-                    this.config.messageValidatorManager,
+                    this.validatorManager,
                 ).processValidation({
                     origin: senderOrigin,
                     message: message,

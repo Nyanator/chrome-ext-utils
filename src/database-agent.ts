@@ -1,8 +1,11 @@
 /**
  * 永続化データーベース
  */
+import "reflect-metadata";
 
-import { InjectionConfig } from "./injection-config";
+import { Logger } from "logger";
+import { inject, injectable } from "tsyringe";
+import { injectOptional } from "./utils/tsyringe-utils";
 
 export interface DatabaseAgent {
     /**
@@ -36,24 +39,20 @@ export interface DatabaseAgent {
 }
 
 /** 構築設定 */
-export interface DatabaseAgentConfig extends InjectionConfig {
+export interface DatabaseAgentConfig {
     databaseName: string; // データベースの名前
     storeName: string; // オブジェクトストア（テーブル）の名前
 }
 
-/**
- * ファクトリ関数
- * @param config 構築設定
- */
-export const DatabaseAgent = (config: DatabaseAgentConfig): DatabaseAgent => {
-    const databaseAgent = new IndexdDBDatabaseAgent(config);
-    return databaseAgent;
-};
-
-class IndexdDBDatabaseAgent implements DatabaseAgent {
+@injectable()
+export class IndexdDBDatabaseAgent implements DatabaseAgent {
     private db: IDBDatabase | null = null;
 
-    constructor(private readonly config: DatabaseAgentConfig) {}
+    constructor(
+        @inject("DatabaseAgentConfig")
+        private readonly config: DatabaseAgentConfig,
+        @injectOptional("Logger") private readonly logger?: Logger,
+    ) {}
 
     async open(): Promise<void> {
         return new Promise((resolve, reject) => {

@@ -1,10 +1,22 @@
 import { chrome } from "jest-chrome";
 
-import * as CryptoAgent from "../crypto-agent";
+import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
 import * as MessageValidator from "../message-validator";
-import { RuntimeMessageAgent } from "../runtime-message-agent";
-import { WindowMessageAgent } from "../window-message-agent";
+import {
+    RuntimeMessageAgent,
+    RuntimeMessageAgentImpl,
+} from "../runtime-message-agent";
+import {
+    WindowMessageAgent,
+    WindowMessageAgentImpl,
+} from "../window-message-agent";
 
+import { container } from "tsyringe";
+import {
+    MessageValidatorManager,
+    MessageValidatorManagerConfig,
+    MessageValidatorManagerImpl,
+} from "../message-validatior-manager";
 import * as MockUtils from "./mocks/mock-utils";
 
 describe.each([false, true])(
@@ -16,29 +28,77 @@ describe.each([false, true])(
         MockUtils.mockAllSessionValues();
 
         beforeEach(async () => {
-            const cryptoAgent = isEncryptionEnabled
-                ? await CryptoAgent.CryptoAgent()
-                : undefined;
+            container.clearInstances();
 
-            jest.spyOn(CryptoAgent, "CryptoAgent")
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .mockResolvedValue(cryptoAgent as any);
-
-            runtimeMessageAgent = await RuntimeMessageAgent({
-                messageValidatorManagerConfig: {
-                    messageValidatorConfig: {
-                        ...MockUtils.mockValidatorConfig,
-                    },
-                },
+            container.register("SessionStaticToken", {
+                useValue: MockUtils.mockSessionStaticValue,
             });
 
-            windowMssageAgent = await WindowMessageAgent({
-                messageValidatorManagerConfig: {
-                    messageValidatorConfig: {
-                        ...MockUtils.mockValidatorConfig,
+            container.register("SessionStaticKey", {
+                useValue: MockUtils.mockSessionStaticValue,
+            });
+
+            container.register("MessageValidatorConfig", {
+                useValue: MockUtils.mockValidatorConfig,
+            });
+
+            if (isEncryptionEnabled) {
+                container.register<CryptoAgent<MessageValidator.MessageData>>(
+                    "CryptoAgent",
+                    {
+                        useClass: AESCryptoAgent<MessageValidator.MessageData>,
+                    },
+                );
+            } else {
+                container.register("CryptoAgent", {
+                    useValue: undefined,
+                });
+            }
+
+            container.register<
+                MessageValidator.MessageValidatorImpl<MessageValidator.MessageData>
+            >("MessageValidator", {
+                useClass:
+                    MessageValidator.MessageValidatorImpl<MessageValidator.MessageData>,
+            });
+
+            container.register<MessageValidatorManagerConfig>(
+                "MessageValidatorManagerConfig",
+                {
+                    useValue: {
+                        maxMessageValidators: 3,
+                        validatorRefreshInterval: 1,
                     },
                 },
+            );
+
+            container.register<
+                RuntimeMessageAgent<MessageValidator.MessageData>
+            >("RuntimeMessageAgent", {
+                useClass: RuntimeMessageAgentImpl,
             });
+
+            container.register<
+                WindowMessageAgent<MessageValidator.MessageData>
+            >("WindowMessageAgent", {
+                useClass: WindowMessageAgentImpl,
+            });
+
+            container.registerSingleton<
+                MessageValidatorManager<MessageValidator.MessageData>
+            >(
+                "MessageValidatorManager",
+                MessageValidatorManagerImpl<MessageValidator.MessageData>,
+            );
+
+            runtimeMessageAgent = container.resolve<
+                RuntimeMessageAgent<MessageValidator.MessageData>
+            >("RuntimeMessageAgent");
+
+            windowMssageAgent =
+                container.resolve<
+                    WindowMessageAgent<MessageValidator.MessageData>
+                >("WindowMessageAgent");
         });
 
         it("iframeから親ウィンドウへwindowメッセージを送受信できるか", async () => {

@@ -1,6 +1,11 @@
 import "fake-indexeddb/auto";
 
-import { DatabaseAgent } from "../database-agent";
+import { container } from "tsyringe";
+import {
+    DatabaseAgent,
+    DatabaseAgentConfig,
+    IndexdDBDatabaseAgent,
+} from "../database-agent";
 
 describe("DatabaseAgentクラス", () => {
     const dbName = "testDB";
@@ -10,7 +15,17 @@ describe("DatabaseAgentクラス", () => {
 
     let db: DatabaseAgent;
     beforeEach(async () => {
-        db = DatabaseAgent({ databaseName: dbName, storeName: storeName });
+        container.clearInstances();
+
+        container.register<DatabaseAgentConfig>("DatabaseAgentConfig", {
+            useValue: { databaseName: dbName, storeName: storeName },
+        });
+
+        container.register<DatabaseAgent>("DatabaseAgent", {
+            useClass: IndexdDBDatabaseAgent,
+        });
+
+        db = container.resolve<DatabaseAgent>("DatabaseAgent");
     });
 
     it("データベースが正常に開けるか", async () => {

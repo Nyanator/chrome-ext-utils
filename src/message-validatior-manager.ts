@@ -2,13 +2,12 @@
  * MessageValidatorを管理し、トークンを自動で更新
  */
 
-import { InjectionConfig } from "./injection-config";
-import {
-    MessageData,
-    MessageValidator,
-    MessageValidatorConfig,
-} from "./message-validator";
+import { Logger } from "logger";
+import "reflect-metadata";
+import { container, inject, injectable } from "tsyringe";
+import { MessageData, MessageValidator } from "./message-validator";
 import { isBackground } from "./utils/chrome-ext-utils";
+import { injectOptional } from "./utils/tsyringe-utils";
 
 export interface MessageValidatorManager<T extends MessageData> {
     /**
@@ -28,73 +27,43 @@ export interface MessageValidatorManager<T extends MessageData> {
     refreshValidators(): Promise<void>;
 
     /**
-     * 管理下のValidatorのリストを返します。
+     * 最新のValidatorを返します。
      */
-    getValidators(): MessageValidator<T>[];
+    getLatestValidator(): Promise<MessageValidator<T>>;
 }
 
 /** 構築設定 */
-export interface MessageValidatorManagerConfig<T extends MessageData>
-    extends InjectionConfig {
-    messageValidatorConfig: MessageValidatorConfig<T>; // Validatorの構築設定
-    maxMessageValidators?: number; // Validatorオブジェクトの最大保持数
-    validatorRefreshInterval?: number; // Validatorオブジェクトの更新間隔(分)
+export interface MessageValidatorManagerConfig {
+    maxMessageValidators: number; // Validatorオブジェクトの最大保持数
+    validatorRefreshInterval: number; // Validatorオブジェクトの更新間隔(分)
 }
 
-/**
- * ファクトリ関数
- * @param config 構築設定
- */
-export const MessageValidatorManager = async <T extends MessageData>(
-    config: MessageValidatorManagerConfig<T>,
-): Promise<MessageValidatorManager<T>> => {
-    const createMessageValidatorFunc = async () =>
-        MessageValidator<T>(config.messageValidatorConfig);
-
-    const messageValidator = await createMessageValidatorFunc();
-
-    const messageValidatorManager = new MessageValidatorManagerImpl<T>(
-        messageValidator,
-        createMessageValidatorFunc,
-        config?.maxMessageValidators ?? 3,
-    );
-
-    if (isBackground()) {
-        chrome.alarms.create("refreshSession", {
-            periodInMinutes: config?.validatorRefreshInterval ?? 1,
-        });
-        chrome.alarms.onAlarm.addListener(() => {
-            messageValidatorManager.refreshValidators();
-        });
-    } else {
-        setInterval(
-            async () => {
-                messageValidatorManager.refreshValidators();
-            },
-            config?.validatorRefreshInterval ?? 1 * 60 * 1000,
-        );
-    }
-
-    return messageValidatorManager;
-};
-
-class MessageValidatorManagerImpl<T extends MessageData>
+@injectable()
+export class MessageValidatorManagerImpl<T extends MessageData>
     implements MessageValidatorManager<T>
 {
-    getValidators(): MessageValidator<T>[] {
-        return this.managedValidators;
-    }
-
     private readonly managedValidators: MessageValidator<T>[] = [];
 
     constructor(
-        initialMessageValidator: MessageValidator<T>,
-        private readonly createMessageValidator: () => Promise<
-            MessageValidator<T>
-        >,
-        private readonly maxMessageValidators: number,
+        @inject("MessageValidatorManagerConfig")
+        private readonly config: MessageValidatorManagerConfig,
+        @injectOptional("Logger") private readonly logger?: Logger,
     ) {
-        this.managedValidators.push(initialMessageValidator);
+        if (isBackground()) {
+            chrome.alarms.create("refreshSession", {
+                periodInMinutes: this.config.validatorRefreshInterval,
+            });
+            chrome.alarms.onAlarm.addListener(() => {
+                this.refreshValidators();
+            });
+        } else {
+            setInterval(
+                async () => {
+                    this.refreshValidators();
+                },
+                this.config.validatorRefreshInterval * 60 * 1000,
+            );
+        }
     }
 
     async processValidation(arg: {
@@ -114,7 +83,7 @@ class MessageValidatorManagerImpl<T extends MessageData>
         }
 
         // 検証が通らなかったので、セッションから新しいValidatorを生成
-        const newValidator = await this.createMessageValidator();
+        const newValidator = await this.createNewValidator();
         this.pushValidator(newValidator);
 
         // 最終的な検証結果は新規作成したValidatorで決定する
@@ -127,7 +96,7 @@ class MessageValidatorManagerImpl<T extends MessageData>
 
     async refreshValidators(): Promise<void> {
         // セッションから新しいValidatorを生成
-        const newValidator = await this.createMessageValidator();
+        const newValidator = await this.createNewValidator();
 
         if (isBackground()) {
             const tokenProvider = newValidator.getProvider();
@@ -138,6 +107,14 @@ class MessageValidatorManagerImpl<T extends MessageData>
             await keyProvider?.generateValue(true);
         }
         this.pushValidator(newValidator);
+    }
+
+    async getLatestValidator(): Promise<MessageValidator<T>> {
+        if (this.managedValidators.length === 0) {
+            const firstValidator = await this.createNewValidator();
+            this.pushValidator(firstValidator);
+        }
+        return this.managedValidators.slice(-1)[0];
     }
 
     private managedValidatorsValidation(arg: {
@@ -158,8 +135,20 @@ class MessageValidatorManagerImpl<T extends MessageData>
 
     private pushValidator(newValidator: MessageValidator<T>) {
         this.managedValidators.push(newValidator);
-        if (this.managedValidators.length > this.maxMessageValidators) {
+        if (this.managedValidators.length > this.config.maxMessageValidators) {
             this.managedValidators.shift();
         }
+    }
+
+    private async createNewValidator(): Promise<MessageValidator<T>> {
+        const newValidator =
+            container.resolve<MessageValidator<T>>("MessageValidator");
+
+        const tokenProvider = newValidator.getProvider();
+        const keyProvider = newValidator.getCryptoAgent()?.getProvider();
+        await tokenProvider.generateValue(false);
+        await keyProvider?.generateValue(false);
+
+        return newValidator;
     }
 }

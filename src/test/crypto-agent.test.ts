@@ -1,6 +1,8 @@
-import { CryptoAgent } from "../crypto-agent";
+import { container } from "tsyringe";
+import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
 import { MessageData } from "../message-validator";
 
+import { SessionStaticKey } from "../session-static-value";
 import {
     initChromeSession,
     initMockCrypto,
@@ -15,7 +17,20 @@ describe("CryptoAgentクラス", () => {
         initMockCrypto();
         initChromeSession();
         initMockFetch();
-        cryptoAgent = await CryptoAgent();
+
+        container.clearInstances();
+
+        container.register("SessionStaticKey", {
+            useClass: SessionStaticKey,
+        });
+
+        container.register<CryptoAgent<MessageData>>("CryptoAgent", {
+            useClass: AESCryptoAgent<MessageData>,
+        });
+
+        cryptoAgent =
+            container.resolve<CryptoAgent<MessageData>>("CryptoAgent");
+        await cryptoAgent.getProvider().generateValue(true);
 
         // getterをカバレージのためにテストする(Uncovered Lineを残すべきではない)
         cryptoAgent.getProvider();

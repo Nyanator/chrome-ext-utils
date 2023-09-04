@@ -1,10 +1,15 @@
 import { chrome } from "jest-chrome";
 
-import { CryptoAgent } from "../crypto-agent";
-import { MessageValidatorManager } from "../message-validatior-manager";
+import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
+import {
+    MessageValidatorManager,
+    MessageValidatorManagerConfig,
+    MessageValidatorManagerImpl,
+} from "../message-validatior-manager";
 import * as MessageValidator from "../message-validator";
 import * as ChromeExtensionUtils from "../utils/chrome-ext-utils";
 
+import { container } from "tsyringe";
 import * as MockUtils from "./mocks/mock-utils";
 
 describe("MessageValidatorManagerクラスのテスト", () => {
@@ -17,23 +22,64 @@ describe("MessageValidatorManagerクラスのテスト", () => {
     let mockInValidRuntimeIdMessage: unknown;
 
     beforeEach(async () => {
-        cryptoAgent = await CryptoAgent<MessageValidator.MessageData>({
-            keyProvider: MockUtils.mockSessionStaticValue,
+        container.clearInstances();
+
+        container.register("SessionStaticToken", {
+            useValue: MockUtils.mockSessionStaticValue,
         });
+
+        container.register("SessionStaticKey", {
+            useValue: MockUtils.mockSessionStaticValue,
+        });
+
+        container.register("MessageValidatorConfig", {
+            useValue: MockUtils.mockValidatorConfig,
+        });
+
+        container.register<CryptoAgent<MessageValidator.MessageData>>(
+            "CryptoAgent",
+            {
+                useClass: AESCryptoAgent<MessageValidator.MessageData>,
+            },
+        );
+
+        cryptoAgent =
+            container.resolve<CryptoAgent<MessageValidator.MessageData>>(
+                "CryptoAgent",
+            );
+
         mockValidMessage = MockUtils.createMockValidMessage(cryptoAgent);
+
         mockInValidRuntimeIdMessage =
             MockUtils.createMockInvalidRuntimeIdMessage(cryptoAgent);
 
-        jest.spyOn(MessageValidator, "MessageValidator").mockResolvedValue(
-            MockUtils.mockMessageValidator,
-        );
+        container.register("MessageValidator", {
+            useValue: MockUtils.mockMessageValidator,
+        });
 
         jest.spyOn(ChromeExtensionUtils, "isBackground").mockReturnValueOnce(
             false,
         );
-        messageValidatorManager = await MessageValidatorManager({
-            messageValidatorConfig: MockUtils.mockValidatorConfig,
+
+        container.register<MessageValidatorManagerConfig>(
+            "MessageValidatorManagerConfig",
+            {
+                useValue: {
+                    maxMessageValidators: 3,
+                    validatorRefreshInterval: 1,
+                },
+            },
+        );
+
+        container.register<
+            MessageValidatorManager<MessageValidator.MessageData>
+        >("MessageValidatorManager", {
+            useClass: MessageValidatorManagerImpl,
         });
+
+        messageValidatorManager = container.resolve<
+            MessageValidatorManager<MessageValidator.MessageData>
+        >("MessageValidatorManager");
     });
 
     it("validationProcess 有効なメッセージを検証すると結果を返す", async () => {
@@ -46,7 +92,7 @@ describe("MessageValidatorManagerクラスのテスト", () => {
     });
 
     it("validationProcess 無効なメッセージを検証するとundefinedを返す", async () => {
-        MockUtils.mockMessageValidator.isValid.mockReturnValueOnce(false);
+        MockUtils.mockMessageValidator.isValid.mockReturnValueOnce(undefined);
         const result = await messageValidatorManager.processValidation({
             origin: MockUtils.allowedOrigins[0],
             message: mockInValidRuntimeIdMessage,
@@ -59,25 +105,31 @@ describe("MessageValidatorManagerクラスのテスト", () => {
             true,
         );
         await messageValidatorManager.refreshValidators();
-        expect(messageValidatorManager.getValidators().length).toBe(2);
+        expect(messageValidatorManager["managedValidators"].length).toBe(1);
     });
 
     it("refreshValidators 最大Validator数を超えた場合、古いValidatorを削除する", async () => {
+        await messageValidatorManager.refreshValidators(); // 1つ目のValidator
         await messageValidatorManager.refreshValidators(); // 2つ目のValidator
         await messageValidatorManager.refreshValidators(); // 3つ目のValidator
         await messageValidatorManager.refreshValidators(); // 4つ目のValidator
-        expect(messageValidatorManager.getValidators().length).toBe(3);
+        expect(messageValidatorManager["managedValidators"].length).toBe(3);
+    });
+
+    it("getLatestValidator 新しいValidatorを返す", async () => {
+        const latestValidator =
+            await messageValidatorManager.getLatestValidator();
+        expect(messageValidatorManager["managedValidators"].length).toBe(1);
     });
 
     it("バックグラウンドでは、chrome.alarms.createを呼んでいる", async () => {
         jest.spyOn(ChromeExtensionUtils, "isBackground").mockReturnValueOnce(
             true,
         );
-        messageValidatorManager = await MessageValidatorManager({
-            messageValidatorConfig: MockUtils.mockValidatorConfig,
-            maxMessageValidators: 3,
-            validatorRefreshInterval: 1,
-        });
+        messageValidatorManager = container.resolve<
+            MessageValidatorManager<MessageValidator.MessageData>
+        >("MessageValidatorManager");
+
         expect(chrome.alarms.create).toHaveBeenLastCalledWith(
             expect.anything(),
             {
@@ -104,9 +156,10 @@ describe("MessageValidatorManagerクラスのテスト", () => {
         jest.spyOn(ChromeExtensionUtils, "isBackground").mockReturnValueOnce(
             false,
         );
-        messageValidatorManager = await MessageValidatorManager({
-            messageValidatorConfig: MockUtils.mockValidatorConfig,
-        });
+        messageValidatorManager = container.resolve<
+            MessageValidatorManager<MessageValidator.MessageData>
+        >("MessageValidatorManager");
+
         expect(setIntervalSpy).toHaveBeenCalledWith(
             expect.anything(),
             1 * 60 * 1000,

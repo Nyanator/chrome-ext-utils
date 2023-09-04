@@ -3,6 +3,9 @@
  * ロギングライブラリをいつでも入れ替えられるように抽象化層を設けています
  */
 
+import "reflect-metadata";
+import { injectable } from "tsyringe";
+
 export interface Logger {
     debug(message: string, ...args: unknown[]): void;
     info(message: string, ...args: unknown[]): void;
@@ -18,7 +21,8 @@ export const Logger = (): Logger => {
 /**
  * コンソール出力のLogger実装
  */
-class ConsoleLogger implements Logger {
+@injectable()
+export class ConsoleLogger implements Logger {
     debug(message: string, ...args: unknown[]): void {
         console.debug(message, ...args);
     }
