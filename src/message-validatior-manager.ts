@@ -1,10 +1,10 @@
 /**
  * MessageValidatorを管理し、トークンを自動で更新
  */
-
-import { Logger } from "logger";
 import "reflect-metadata";
 import { container, inject, injectable } from "tsyringe";
+
+import { Logger } from "./logger";
 import { MessageData, MessageValidator } from "./message-validator";
 import { isBackground } from "./utils/chrome-ext-utils";
 import { injectOptional } from "./utils/tsyringe-utils";

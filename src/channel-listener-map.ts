@@ -1,9 +1,10 @@
 /**
  * チャンネルを管理するマップ
  */
-import { Logger } from "logger";
 import "reflect-metadata";
 import { injectable } from "tsyringe";
+
+import { Logger } from "./logger";
 import { injectOptional } from "./utils/tsyringe-utils";
 
 /** 型付けされたデータと応答を持つチャンネル(継承して使用してください) */

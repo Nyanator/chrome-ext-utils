@@ -2,10 +2,11 @@
  * Elementを型安全に読み込むローダー
  */
 
-import { Logger } from "logger";
 import "reflect-metadata";
 import { inject, injectable } from "tsyringe";
+
 import { EventListenerMap } from "./event-listener-map";
+import { Logger } from "./logger";
 import { loadResourceText } from "./utils/chrome-ext-utils";
 import { htmlTextToHtmlElement } from "./utils/dom-utils";
 import { injectOptional } from "./utils/tsyringe-utils";

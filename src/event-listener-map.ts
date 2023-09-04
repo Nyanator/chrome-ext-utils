@@ -2,10 +2,11 @@
  * リスナーの購読と解除を管理するマップ
  */
 
-import { Logger } from "logger";
 import "reflect-metadata";
 import { injectable } from "tsyringe";
+
 import { EventListenerConfig } from "./element-loader";
+import { Logger } from "./logger";
 import { assertNotNull, uniqueSet } from "./utils/ts-utils";
 import { injectOptional } from "./utils/tsyringe-utils";
 

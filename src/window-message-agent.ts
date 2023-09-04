@@ -2,9 +2,10 @@
  * メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ウィンドウ)
  */
 
-import { Logger } from "logger";
 import "reflect-metadata";
 import { inject, injectable } from "tsyringe";
+
+import { Logger } from "./logger";
 import { MessageValidatorManager } from "./message-validatior-manager";
 import { MessageData } from "./message-validator";
 import { assertNotNull } from "./utils/ts-utils";

@@ -4,8 +4,8 @@
 
 import "reflect-metadata";
 
-import { Logger } from "logger";
 import { inject, injectable } from "tsyringe";
+
 import {
     ChannelData,
     ChannelListener,
@@ -13,6 +13,7 @@ import {
     ChannelMap,
     ChannelResponse,
 } from "./channel-listener-map";
+import { Logger } from "./logger";
 import { injectOptional } from "./utils/tsyringe-utils";
 
 export interface CrossDispatcher<T extends ChannelMap>
