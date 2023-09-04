@@ -2,9 +2,13 @@
  * Elementを型安全に読み込むローダー
  */
 
+import { Logger } from "logger";
+import "reflect-metadata";
+import { inject, injectable } from "tsyringe";
 import { EventListenerMap } from "./event-listener-map";
 import { loadResourceText } from "./utils/chrome-ext-utils";
 import { htmlTextToHtmlElement } from "./utils/dom-utils";
+import { injectOptional } from "./utils/tsyringe-utils";
 
 // ElementSpecifier の型引数を修正
 export interface ElementLoader<Elements extends { [key: string]: Element }> {
@@ -55,26 +59,19 @@ export interface ElementLoaderConfig<
     path: string;
 }
 
-/**
- * ファクトリ関数
- * @param config 構築設定
- */
-export const FetchElementLoader = <
-    Spec extends { [key: string]: ElementSpecifier<Element> },
->(
-    config: ElementLoaderConfig<Spec>,
-): ElementLoader<ElementMap<Spec>> => {
-    return new FetchElementLoaderImpl(config);
-};
-
-class FetchElementLoaderImpl<
+@injectable()
+export class FetchElementLoaderImpl<
     Spec extends { [key: string]: ElementSpecifier<Element> },
 > implements ElementLoader<ElementMap<Spec>>
 {
     readonly elements = {} as ElementMap<Spec>;
     private readonly listenersMap = new EventListenerMap();
 
-    constructor(private readonly config: ElementLoaderConfig<Spec>) {}
+    constructor(
+        @inject("ElementLoaderConfig")
+        private readonly config: ElementLoaderConfig<Spec>,
+        @injectOptional("Logger") private readonly logger?: Logger,
+    ) {}
 
     async load() {
         // パスからFetchして

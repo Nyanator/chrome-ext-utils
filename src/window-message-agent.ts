@@ -2,13 +2,13 @@
  * メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ウィンドウ)
  */
 
-import { InjectionConfig } from "./injection-config";
-import {
-    MessageValidatorManager,
-    MessageValidatorManagerConfig,
-} from "./message-validatior-manager";
+import { Logger } from "logger";
+import "reflect-metadata";
+import { inject, injectable } from "tsyringe";
+import { MessageValidatorManager } from "./message-validatior-manager";
 import { MessageData } from "./message-validator";
 import { assertNotNull } from "./utils/ts-utils";
+import { injectOptional } from "./utils/tsyringe-utils";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ウィンドウ) */
 export interface WindowMessageAgent<T extends MessageData> {
@@ -36,60 +36,25 @@ export interface WindowMessageAgent<T extends MessageData> {
     removeListener(): void;
 }
 
-/** 構築設定 */
-export interface WindowMessageAgentConfig<T extends MessageData>
-    extends InjectionConfig {
-    /**
-     * メッセージの検証に使うバリデーターマネージャー
-     */
-    messageValidatorManager?: MessageValidatorManager<T>;
-
-    /**
-     * バリデーターマネージャーの構築設定
-     */
-    messageValidatorManagerConfig?: MessageValidatorManagerConfig<T>;
-}
-
-/**
- * ファクトリ関数
- * @param config 構築設定
- */
-export const WindowMessageAgent = async <T extends MessageData>(
-    config: WindowMessageAgentConfig<T>,
-): Promise<WindowMessageAgent<T>> => {
-    let messageValidatorManagerInstance = config.messageValidatorManager;
-    // messageValidatorManagerConfig が存在し、messageValidatorManagerInstance が存在しない場合
-    if (
-        !messageValidatorManagerInstance &&
-        config.messageValidatorManagerConfig
-    ) {
-        messageValidatorManagerInstance = await MessageValidatorManager<T>(
-            config.messageValidatorManagerConfig,
-        );
-        config.messageValidatorManager = messageValidatorManagerInstance;
-    }
-
-    const messageAgent = new WindowMessageAgentImpl(config);
-    return messageAgent;
-};
-
-class WindowMessageAgentImpl<T extends MessageData>
+@injectable()
+export class WindowMessageAgentImpl<T extends MessageData>
     implements WindowMessageAgent<T>
 {
     private windowListener?: (event: MessageEvent) => void;
 
-    constructor(private readonly config: WindowMessageAgentConfig<T>) {}
+    constructor(
+        @inject("MessageValidatorManager")
+        private readonly validatorManager: MessageValidatorManager<T>,
+        @injectOptional("Logger") private readonly logger?: Logger,
+    ) {}
 
     async postMessage(arg: {
         target: Window;
         targetOrigin: string;
         message: T;
     }): Promise<void> {
-        const latestValidator = assertNotNull(
-            this.config.messageValidatorManager,
-        )
-            .getValidators()
-            .slice(-1)[0];
+        const latestValidator =
+            await this.validatorManager.getLatestValidator();
 
         const cryptoAgent = latestValidator.getCryptoAgent();
         const messageData =
@@ -110,7 +75,7 @@ class WindowMessageAgentImpl<T extends MessageData>
 
         this.windowListener = async (event: MessageEvent) => {
             const messageData = await assertNotNull(
-                this.config.messageValidatorManager,
+                this.validatorManager,
             ).processValidation({
                 origin: event.origin,
                 message: event.data,

@@ -2,12 +2,19 @@
  * リスナーの購読と解除を管理するマップ
  */
 
+import { Logger } from "logger";
+import "reflect-metadata";
+import { injectable } from "tsyringe";
 import { EventListenerConfig } from "./element-loader";
 import { assertNotNull, uniqueSet } from "./utils/ts-utils";
+import { injectOptional } from "./utils/tsyringe-utils";
 
+@injectable()
 export class EventListenerMap {
     private readonly eventListeners: Map<Element, Map<string, EventListener>> =
         new Map();
+
+    constructor(@injectOptional("Logger") private readonly logger?: Logger) {}
 
     /**
      * Elementにリスナーを設定しマップに保存する

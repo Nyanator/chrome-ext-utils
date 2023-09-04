@@ -1,9 +1,12 @@
+import { container } from "tsyringe";
 import {
     ElementLoader,
+    ElementLoaderConfig,
     ElementMap,
-    FetchElementLoader,
+    FetchElementLoaderImpl,
     defineElements,
 } from "../element-loader";
+import { EventListenerMap } from "../event-listener-map";
 import { loadResourceText } from "../utils/chrome-ext-utils";
 
 // モック関数を定義
@@ -13,21 +16,38 @@ const spec = defineElements({
     wrapdiv: { id: "#wrapdiv", elementType: HTMLDivElement },
     someButton: { id: "#someButton", elementType: HTMLButtonElement },
 });
+type Spec = ElementMap<typeof spec>;
 
 describe("FetchElementLoaderクラス", () => {
     beforeEach(() => {
+        container.clearInstances();
+
+        container.register("EventListenerMap", {
+            useClass: EventListenerMap,
+        });
+
+        container.register<ElementLoaderConfig<typeof spec>>(
+            "ElementLoaderConfig",
+            {
+                useValue: {
+                    spec: spec,
+                    path: "/path/to/resource.html",
+                },
+            },
+        );
+
+        container.register<ElementLoader<Spec>>("ElementLoader", {
+            useClass: FetchElementLoaderImpl,
+        });
+
         (loadResourceText as jest.Mock).mockResolvedValue(
             '<div id="wrapdiv"></div><button id="someButton"></button>',
         );
     });
 
     it("指定されたpathからElementを正しくロードする", async () => {
-        const loader = FetchElementLoader({
-            spec: spec,
-            path: "/path/to/resource.html",
-        });
+        const loader = container.resolve<ElementLoader<Spec>>("ElementLoader");
         await loader.load();
-
         expect(loader.elements.wrapdiv).toBeInstanceOf(HTMLDivElement);
         expect(loader.elements.someButton).toBeInstanceOf(HTMLButtonElement);
     });
@@ -36,11 +56,7 @@ describe("FetchElementLoaderクラス", () => {
         (loadResourceText as jest.Mock).mockResolvedValue(
             '<h1 id="unexpectedElement"></h1>',
         );
-        const loader = FetchElementLoader({
-            spec: spec,
-            path: "/path/to/resource.html",
-        });
-
+        const loader = container.resolve<ElementLoader<Spec>>("ElementLoader");
         await expect(loader.load()).rejects.toThrow();
     });
 
@@ -48,21 +64,13 @@ describe("FetchElementLoaderクラス", () => {
         (loadResourceText as jest.Mock).mockResolvedValue(
             '<h1 id="wrapdiv"></h1><button id="someButton"></button>',
         );
-        const loader = FetchElementLoader({
-            spec: spec,
-            path: "/path/to/resource.html",
-        });
-
+        const loader = container.resolve<ElementLoader<Spec>>("ElementLoader");
         await expect(loader.load()).rejects.toThrow();
     });
 
     it("ElementMapを併用することで任意の型を持ったElmentLoader<T>をインジェクションできる", async () => {
-        type Spec = ElementMap<typeof spec>;
-
-        const typedLoader = FetchElementLoader({
-            spec: spec,
-            path: "/path/to/resource.html",
-        });
+        const typedLoader =
+            container.resolve<ElementLoader<Spec>>("ElementLoader");
         await typedLoader.load();
 
         // 型付けされているので引数に渡せる
@@ -76,17 +84,12 @@ describe("FetchElementLoaderクラス", () => {
                 HTMLButtonElement,
             );
         };
-
         typedLoaderParamTest(typedLoader);
     });
 
     it("宣言的な記法でリスナーの設定ができる", async () => {
         const handleClick = jest.fn();
-
-        const loader = FetchElementLoader({
-            spec: spec,
-            path: "/path/to/resource.html",
-        });
+        const loader = container.resolve<ElementLoader<Spec>>("ElementLoader");
         await loader.load();
         loader.addListeners([
             {
@@ -102,7 +105,6 @@ describe("FetchElementLoaderクラス", () => {
                 },
             },
         ]);
-
         loader.elements.someButton.click();
         loader.elements.wrapdiv.click();
         expect(handleClick).toHaveBeenCalledTimes(2);
@@ -110,11 +112,7 @@ describe("FetchElementLoaderクラス", () => {
 
     it("リスナーが削除できる", async () => {
         const handleClick = jest.fn();
-
-        const loader = FetchElementLoader({
-            spec: spec,
-            path: "/path/to/resource.html",
-        });
+        const loader = container.resolve<ElementLoader<Spec>>("ElementLoader");
         await loader.load();
         loader.addListeners([
             {
@@ -125,7 +123,6 @@ describe("FetchElementLoaderクラス", () => {
             },
         ]);
         loader.removeAllListeners();
-
         loader.elements.someButton.click();
         expect(handleClick).toHaveBeenCalledTimes(0);
     });

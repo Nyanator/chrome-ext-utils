@@ -1,7 +1,10 @@
 /**
  * チャンネルを管理するマップ
  */
-import { InjectionConfig } from "./injection-config";
+import { Logger } from "logger";
+import "reflect-metadata";
+import { injectable } from "tsyringe";
+import { injectOptional } from "./utils/tsyringe-utils";
 
 /** 型付けされたデータと応答を持つチャンネル(継承して使用してください) */
 export interface ChannelMap {
@@ -59,21 +62,11 @@ export interface ChannelListenerMap<T extends ChannelMap> {
     getListeners(): Map<keyof T, ChannelListener<T, keyof T>[]>;
 }
 
-/**
- * ファクトリ関数
- * @param config 構築設定
- */
-export const ChannelListenerMap = <T extends ChannelMap>(
-    config?: InjectionConfig,
-): ChannelListenerMap<T> => {
-    return new ChanneListenerMapImpl(config);
-};
-
-class ChanneListenerMapImpl<T extends ChannelMap>
+@injectable()
+export class ChanneListenerMapImpl<T extends ChannelMap>
     implements ChannelListenerMap<T>
 {
-    constructor(private readonly config?: InjectionConfig) {}
-
+    constructor(@injectOptional("Logger") private readonly logger?: Logger) {}
     private readonly listeners: Map<keyof T, ChannelListener<T, keyof T>[]> =
         new Map();
 

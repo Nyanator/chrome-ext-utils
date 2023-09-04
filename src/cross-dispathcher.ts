@@ -2,8 +2,10 @@
  * 型付けされた相互通信チャンネルクラス
  */
 
-import { InjectionConfig } from "injection-config";
+import "reflect-metadata";
 
+import { Logger } from "logger";
+import { inject, injectable } from "tsyringe";
 import {
     ChannelData,
     ChannelListener,
@@ -11,6 +13,7 @@ import {
     ChannelMap,
     ChannelResponse,
 } from "./channel-listener-map";
+import { injectOptional } from "./utils/tsyringe-utils";
 
 export interface CrossDispatcher<T extends ChannelMap>
     extends ChannelListenerMap<T> {
@@ -27,25 +30,23 @@ export interface CrossDispatcher<T extends ChannelMap>
 }
 
 /** 構築設定 */
-export interface CrossDispatcherConfig extends InjectionConfig {
+export interface CrossDispatcherConfig {
     strictMode?: boolean; // 例外安全にしたければfalse、それ以外は例外を送出します
 }
 
-/**
- * ファクトリ関数
- * @param config 構築設定
- */
-export const CrossDispatcher = <T extends ChannelMap>(
-    config?: CrossDispatcherConfig,
-): CrossDispatcher<T> => {
-    return new CrossDispatcherImpl(config);
-};
-
-class CrossDispatcherImpl<T extends ChannelMap> implements CrossDispatcher<T> {
-    private readonly channelListenerMap = ChannelListenerMap<T>(this.config);
+@injectable()
+export class CrossDispatcherImpl<T extends ChannelMap>
+    implements CrossDispatcher<T>
+{
     private readonly dispatchingChannel: Set<keyof T> = new Set();
 
-    constructor(private readonly config?: CrossDispatcherConfig) {}
+    constructor(
+        @inject("ChannelListenerMap")
+        private readonly channelListenerMap: ChannelListenerMap<T>,
+        @injectOptional("CrossDispatcherConfig")
+        private readonly config?: CrossDispatcherConfig,
+        @injectOptional("Logger") private readonly logger?: Logger,
+    ) {}
 
     channel<K extends keyof T>(channelMap: {
         [Key in K]: ChannelListener<T, Key>;
@@ -127,6 +128,6 @@ class CrossDispatcherImpl<T extends ChannelMap> implements CrossDispatcher<T> {
         if (this.config?.strictMode) {
             throw new Error(message);
         }
-        this.config?.logger?.error(message);
+        this.logger?.error(message);
     }
 }

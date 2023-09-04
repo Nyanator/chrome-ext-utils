@@ -1,4 +1,6 @@
 import CryptoJS from "crypto-js";
+import "reflect-metadata";
+import { injectable } from "tsyringe";
 
 import * as ChromeExtensionUtils from "./utils/chrome-ext-utils";
 
@@ -19,6 +21,7 @@ export interface SessionStaticValue {
 /**
  * セッションで静的な暗号化の鍵を生成します。
  */
+@injectable()
 export class SessionStaticKey implements SessionStaticValue {
     private key = "";
     private aesInitial = "";
@@ -50,6 +53,7 @@ export class SessionStaticKey implements SessionStaticValue {
 /**
  * セッションで静的なトークンを生成します。
  */
+@injectable()
 export class SessionStaticToken implements SessionStaticValue {
     private token = "";
 
