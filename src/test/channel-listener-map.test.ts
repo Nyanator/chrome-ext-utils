@@ -64,7 +64,7 @@ describe("ChannelListenerMap クラス", () => {
             channel1: () => {},
             channel2: () => {},
         });
-        map.clear();
+        map.clearListeners();
 
         expect(map.getListeners().size).toBe(0);
     });

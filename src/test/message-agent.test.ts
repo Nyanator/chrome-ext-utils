@@ -149,22 +149,21 @@ describe.each([false, true])(
             });
         });
 
-        /**
-         * WindowMessageの送受信をテストします。
-         * @param テスト対象の送信処理。送信データと送信元のオリジンを持つオブジェクトを返してください。
-         * @returns WindowMessageを受信したときに解決されるプロミス。
-         */
         async function testWindowMessage(
             postAction: () => Promise<{ data: unknown; origin: string }>,
+            listerSetAction?: (resolve) => void,
         ): Promise<void> {
+            if (!listerSetAction) {
+                listerSetAction = (resolve) => {
+                    // リスナーを設定
+                    windowMssageAgent.addListener((data) => {
+                        expect(data).toEqual(MockUtils.mockMessageData);
+                        resolve();
+                    });
+                };
+            }
             // Promiseを使用して非同期のリスナー処理をラップ
-            const messageReceived = new Promise<void>((resolve) => {
-                // リスナーを設定
-                windowMssageAgent.addListener((data) => {
-                    expect(data).toEqual(MockUtils.mockMessageData);
-                    resolve();
-                });
-            });
+            const messageReceived = new Promise<void>(listerSetAction);
 
             // 非同期にメッセージを送信するようにスケジューリング
             process.nextTick(async () => {
@@ -213,21 +212,20 @@ describe.each([false, true])(
             expect(receivedMessage).toEqual(MockUtils.mockMessageData);
         });
 
-        /**
-         * RuntimeMessageの送受信をテストします。
-         * @param テスト対象の送信処理。送信したデータオブジェクトを返してください。
-         * @returns RuntimeMessageを受信したときに解決されるプロミス。
-         */
         async function testRuntimeMessage(
             sendAction: () => Promise<unknown>,
+            listerSetAction?: (resolve) => void,
         ): Promise<MessageValidator.MessageData> {
-            // Promiseを使用して非同期のリスナー処理をラップ
-            const messageReceived = new Promise<MessageValidator.MessageData>(
-                (resolve) => {
+            if (!listerSetAction) {
+                listerSetAction = (resolve) => {
                     runtimeMessageAgent.addListener(async (data) => {
                         resolve(data);
                     });
-                },
+                };
+            }
+            // Promiseを使用して非同期のリスナー処理をラップ
+            const messageReceived = new Promise<MessageValidator.MessageData>(
+                listerSetAction,
             );
 
             // 非同期にメッセージを送信するようにスケジューリング
@@ -245,7 +243,7 @@ describe.each([false, true])(
             return messageReceived;
         }
 
-        it("無効なランタイムメッセージを拒否するか", () => {
+        it("無効なランタイムメッセージを拒否するか Rumtime", () => {
             let called = false;
             runtimeMessageAgent.addListener(async () => {
                 called = true;
@@ -260,7 +258,7 @@ describe.each([false, true])(
             expect(called).toBe(false);
         });
 
-        it("無効なウィンドウメッセージを拒否するか", () => {
+        it("無効なウィンドウメッセージを拒否するか Window", () => {
             let called = false;
             windowMssageAgent.addListener(() => {
                 called = true;
@@ -276,11 +274,195 @@ describe.each([false, true])(
             expect(called).toBe(false);
         });
 
+        it("複数のリスナーが送受信できる Window", async () => {
+            const called = [false, false, false];
+            await testWindowMessage(
+                async () => {
+                    // iframeにいるものとして親へのpostMessageをモックする
+                    window.parent.postMessage = jest.fn();
+                    await windowMssageAgent.postMessage({
+                        target: window.parent,
+                        targetOrigin: MockUtils.allowedOrigins[0],
+                        message: MockUtils.mockMessageData,
+                    });
+
+                    // window.parent.postMessageを呼び出したときの引数を取り出す
+                    const postedMessage = (
+                        window.parent.postMessage as jest.Mock
+                    ).mock.calls[0][0];
+                    return {
+                        data: postedMessage,
+                        origin: MockUtils.allowedOrigins[1],
+                    };
+                },
+                (reslove) => {
+                    windowMssageAgent.addListener((data) => {
+                        called[0] = true;
+                        reslove(data);
+                    });
+
+                    windowMssageAgent.addListener((data) => {
+                        called[1] = true;
+                        reslove(data);
+                    });
+
+                    windowMssageAgent.addListener((data) => {
+                        called[2] = true;
+                        reslove(data);
+                    });
+                },
+            );
+            expect(called.every((calledStatus) => calledStatus === true)).toBe(
+                true,
+            );
+        });
+
+        it("複数のリスナーが送受信できる Runtime", async () => {
+            const called = [false, false, false];
+            await testRuntimeMessage(
+                async () => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (chrome.runtime.sendMessage as any) = jest.fn();
+
+                    await runtimeMessageAgent.sendMessage({
+                        message: MockUtils.mockMessageData,
+                    });
+
+                    // chrome.runtime.sendMessageを呼び出したときの引数を取り出す
+                    return (chrome.runtime.sendMessage as jest.Mock).mock
+                        .calls[0][1];
+                },
+                (reslove) => {
+                    runtimeMessageAgent.addListener(async (data) => {
+                        called[0] = true;
+                        reslove(data);
+                    });
+
+                    runtimeMessageAgent.addListener(async (data) => {
+                        called[1] = true;
+                        reslove(data);
+                    });
+
+                    runtimeMessageAgent.addListener(async (data) => {
+                        called[2] = true;
+                        reslove(data);
+                    });
+                },
+            );
+            expect(called.every((calledStatus) => calledStatus === true)).toBe(
+                true,
+            );
+        });
+
+        it("指定したリスナーが削除できる Window", async () => {
+            let called = false;
+            const listener = () => {
+                called = true;
+            };
+
+            windowMssageAgent.addListener(listener);
+            windowMssageAgent.removeListener(listener);
+
+            // ウィンドウメッセージをシュミレート
+            window.dispatchEvent(
+                new MessageEvent("message", {
+                    origin: MockUtils.allowedOrigins[0],
+                    data: MockUtils.mockMessageData,
+                }),
+            );
+
+            // リスナーが呼び出されないことを確認
+            expect(called).toBe(false);
+        });
+
+        it("指定したリスナーが削除できる Runtime", async () => {
+            let called = false;
+            const listener = async (
+                messageData: MessageValidator.MessageData,
+            ) => {
+                called = true;
+            };
+
+            runtimeMessageAgent.addListener(listener);
+            runtimeMessageAgent.removeListener(listener);
+
+            // ランタイムメッセージをシュミレート
+            chrome.runtime.onMessage.callListeners(
+                MockUtils.mockMessageData,
+                { origin: MockUtils.allowedOrigins[0] },
+                () => {},
+            );
+
+            // リスナーが呼び出されないことを確認
+            expect(called).toBe(false);
+        });
+
+        it("すべてのリスナーが削除できる Window", async () => {
+            let called1 = false;
+            let called2 = false;
+
+            const listener1 = () => {
+                called1 = true;
+            };
+
+            const listener2 = () => {
+                called2 = true;
+            };
+
+            windowMssageAgent.addListener(listener1);
+            windowMssageAgent.addListener(listener2);
+            windowMssageAgent.clearListeners();
+
+            // ウィンドウメッセージをシュミレート
+            window.dispatchEvent(
+                new MessageEvent("message", {
+                    origin: MockUtils.allowedOrigins[0],
+                    data: MockUtils.mockMessageData,
+                }),
+            );
+
+            // リスナーが呼び出されないことを確認
+            expect(called1).toBe(false);
+            expect(called2).toBe(false);
+        });
+
+        it("すべてのリスナーが削除できる Runtime", async () => {
+            let called1 = false;
+            let called2 = false;
+
+            const listener1 = async (
+                messageData: MessageValidator.MessageData,
+            ) => {
+                called1 = true;
+            };
+
+            const listener2 = async (
+                messageData: MessageValidator.MessageData,
+            ) => {
+                called1 = true;
+            };
+
+            runtimeMessageAgent.addListener(listener1);
+            runtimeMessageAgent.addListener(listener2);
+            runtimeMessageAgent.clearListeners();
+
+            // ランタイムメッセージをシュミレート
+            chrome.runtime.onMessage.callListeners(
+                MockUtils.mockMessageData,
+                { origin: MockUtils.allowedOrigins[0] },
+                () => {},
+            );
+
+            // リスナーが呼び出されないことを確認
+            expect(called1).toBe(false);
+            expect(called2).toBe(false);
+        });
+
         afterEach(() => {
             // 暗号化の有無を切り替える前にリスナーの購読を解除しないと必ず失敗するため
             // メソッドのテストを兼ねている
-            runtimeMessageAgent.removeListener();
-            windowMssageAgent.removeListener();
+            runtimeMessageAgent.clearListeners();
+            windowMssageAgent.clearListeners();
         });
     },
 );

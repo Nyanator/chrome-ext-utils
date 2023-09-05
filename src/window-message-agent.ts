@@ -7,8 +7,8 @@ import "reflect-metadata";
 import { inject, injectable } from "tsyringe";
 import { MessageValidatorManager } from "./message-validatior-manager";
 import { MessageData } from "./message-validator";
+import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";
-import { injectOptional } from "./utils/tsyringe-utils";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ウィンドウ) */
 export interface WindowMessageAgent<T extends MessageData> {
@@ -31,16 +31,24 @@ export interface WindowMessageAgent<T extends MessageData> {
     addListener(listener: (event: T) => void): void;
 
     /**
-     * Windowメッセージの購読を解除します。
+     * 指定したリスナーを解除します。
      */
-    removeListener(): void;
+    removeListener(listener: (event: T) => void): void;
+
+    /**
+     * リスナーをすべて解除します。
+     */
+    clearListeners(): void;
 }
 
 @injectable()
 export class WindowMessageAgentImpl<T extends MessageData>
     implements WindowMessageAgent<T>
 {
-    private windowListener?: (event: MessageEvent) => void;
+    private readonly windowListeners: Map<
+        (event: T) => void,
+        (event: MessageEvent) => void
+    > = new Map();
 
     constructor(
         @inject("MessageValidatorManager")
@@ -71,9 +79,7 @@ export class WindowMessageAgentImpl<T extends MessageData>
     }
 
     addListener(listener: (event: T) => void): void {
-        this.removeListener();
-
-        this.windowListener = async (event: MessageEvent) => {
+        const newListener = async (event: MessageEvent) => {
             const messageData = await assertNotNull(
                 this.validatorManager,
             ).processValidation({
@@ -87,13 +93,22 @@ export class WindowMessageAgentImpl<T extends MessageData>
             listener(messageData);
         };
 
-        window.addEventListener("message", this.windowListener);
+        this.windowListeners.set(listener, newListener);
+        window.addEventListener("message", newListener);
     }
 
-    removeListener(): void {
-        if (this.windowListener) {
-            window.removeEventListener("message", this.windowListener);
-            this.windowListener = undefined;
+    removeListener(listener: (event: T) => void): void {
+        const windowListener = this.windowListeners.get(listener);
+        if (windowListener) {
+            window.removeEventListener("message", windowListener);
+            this.windowListeners.delete(listener);
         }
+    }
+
+    clearListeners(): void {
+        this.windowListeners.forEach((listener) => {
+            window.removeEventListener("message", listener);
+        });
+        this.windowListeners.clear();
     }
 }

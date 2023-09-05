@@ -6,8 +6,8 @@ import { MessageValidatorManager } from "message-validatior-manager";
 import "reflect-metadata";
 import { inject, injectable } from "tsyringe";
 import { MessageData } from "./message-validator";
+import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";
-import { injectOptional } from "./utils/tsyringe-utils";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ランタイム) */
 export interface RuntimeMessageAgent<T extends MessageData> {
@@ -25,20 +25,28 @@ export interface RuntimeMessageAgent<T extends MessageData> {
     addListener(listener: (messageData: T) => Promise<T | void>): void;
 
     /**
-     * ランタイムメッセージの購読を解除します。
+     * 指定したリスナーを解除します。
      */
-    removeListener(): void;
+    removeListener(listener: (messageData: T) => Promise<T | void>): void;
+
+    /**
+     * リスナーをすべて解除します。
+     */
+    clearListeners(): void;
 }
 
 @injectable()
 export class RuntimeMessageAgentImpl<T extends MessageData>
     implements RuntimeMessageAgent<T>
 {
-    private runtimeListener?: (
-        message: unknown,
-        sender: chrome.runtime.MessageSender,
-        sendResponse: (response?: unknown) => void,
-    ) => void;
+    private readonly runtimeListeners: Map<
+        (messageData: T) => Promise<T | void>,
+        (
+            message: unknown,
+            sender: chrome.runtime.MessageSender,
+            sendResponse: (response?: unknown) => void,
+        ) => void
+    > = new Map();
 
     constructor(
         @inject("MessageValidatorManager")
@@ -70,14 +78,11 @@ export class RuntimeMessageAgentImpl<T extends MessageData>
     }
 
     addListener(listener: (messageData: T) => Promise<T | void>): void {
-        this.removeListener();
-
-        this.runtimeListener = (
+        const newListener = (
             message: unknown,
             sender: chrome.runtime.MessageSender,
             sendResponse: (response?: unknown) => void,
         ) => {
-            // IIFE
             (async () => {
                 const senderOrigin = assertNotNull(sender.origin);
                 const messageData = await assertNotNull(
@@ -99,13 +104,22 @@ export class RuntimeMessageAgentImpl<T extends MessageData>
             return true;
         };
 
-        chrome.runtime.onMessage.addListener(this.runtimeListener);
+        this.runtimeListeners.set(listener, newListener);
+        chrome.runtime.onMessage.addListener(newListener);
     }
 
-    removeListener(): void {
-        if (this.runtimeListener) {
-            chrome.runtime.onMessage.removeListener(this.runtimeListener);
-            this.runtimeListener = undefined;
+    removeListener(listener: (messageData: T) => Promise<T | void>): void {
+        const runtimeListener = this.runtimeListeners.get(listener);
+        if (runtimeListener) {
+            chrome.runtime.onMessage.removeListener(runtimeListener);
+            this.runtimeListeners.delete(listener);
         }
+    }
+
+    clearListeners(): void {
+        this.runtimeListeners.forEach((listener) => {
+            chrome.runtime.onMessage.removeListener(listener);
+        });
+        this.runtimeListeners.clear();
     }
 }

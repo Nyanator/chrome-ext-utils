@@ -4,7 +4,7 @@
 import { Logger } from "logger";
 import "reflect-metadata";
 import { injectable } from "tsyringe";
-import { injectOptional } from "./utils/tsyringe-utils";
+import { injectOptional } from "./utils/inject-optional";
 
 /** 型付けされたデータと応答を持つチャンネル(継承して使用してください) */
 export interface ChannelMap {
@@ -56,7 +56,7 @@ export interface ChannelListenerMap<T extends ChannelMap> {
     /**
      * 全てのリスナーを登録解除します。
      */
-    clear(): void;
+    clearListeners(): void;
 
     /** 全てのリスナーを取得する */
     getListeners(): Map<keyof T, ChannelListener<T, keyof T>[]>;
@@ -108,7 +108,7 @@ export class ChanneListenerMapImpl<T extends ChannelMap>
         this.listeners.set(channelKey, []);
     }
 
-    clear(): void {
+    clearListeners(): void {
         this.listeners.clear();
     }
 

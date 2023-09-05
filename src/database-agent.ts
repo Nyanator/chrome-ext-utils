@@ -5,7 +5,7 @@ import "reflect-metadata";
 
 import { Logger } from "logger";
 import { inject, injectable } from "tsyringe";
-import { injectOptional } from "./utils/tsyringe-utils";
+import { injectOptional } from "./utils/inject-optional";
 
 export interface DatabaseAgent {
     /**

@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { CryptoAgent } from "../../crypto-agent";
 import { MessageData } from "../../message-validator";
 import {

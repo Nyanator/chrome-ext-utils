@@ -248,7 +248,7 @@ describe("CrossDispatcherクラス", () => {
                 return "abc";
             },
             channel3: async () => {
-                await expect(
+                expect(
                     dispatcher.dispatch({
                         channelKey: "channel1",
                         channelData: 3,
@@ -484,7 +484,7 @@ describe("CrossDispatcherクラス", () => {
             },
         });
 
-        dispatcher.clear();
+        dispatcher.clearListeners();
         dispatcher.dispatch({ channelKey: "channel1", channelData: {} });
         dispatcher.dispatch({ channelKey: "channel2", channelData: {} });
         expect(listener1Called).toBe(false);

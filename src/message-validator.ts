@@ -7,8 +7,8 @@ import "reflect-metadata";
 import { inject, injectable } from "tsyringe";
 import { CryptoAgent } from "./crypto-agent";
 import { SessionStaticValue } from "./session-static-value";
+import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";
-import { injectOptional } from "./utils/tsyringe-utils";
 
 /** メッセージオブジェクト */
 export interface MessageData {
@@ -16,6 +16,11 @@ export interface MessageData {
      * 拡張機能のID。
      */
     readonly runtimeId: string;
+
+    /**
+     * チャンネル識別子。
+     */
+    readonly channel: string;
 
     /**
      * メッセージ本文。

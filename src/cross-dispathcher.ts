@@ -13,7 +13,7 @@ import {
     ChannelMap,
     ChannelResponse,
 } from "./channel-listener-map";
-import { injectOptional } from "./utils/tsyringe-utils";
+import { injectOptional } from "./utils/inject-optional";
 
 export interface CrossDispatcher<T extends ChannelMap>
     extends ChannelListenerMap<T> {
@@ -116,8 +116,8 @@ export class CrossDispatcherImpl<T extends ChannelMap>
         this.channelListenerMap.removeForChannel(channelKey);
     }
 
-    clear(): void {
-        this.channelListenerMap.clear();
+    clearListeners(): void {
+        this.channelListenerMap.clearListeners();
     }
 
     getListeners(): Map<keyof T, ChannelListener<T, keyof T>[]> {

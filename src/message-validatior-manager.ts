@@ -7,7 +7,7 @@ import "reflect-metadata";
 import { container, inject, injectable } from "tsyringe";
 import { MessageData, MessageValidator } from "./message-validator";
 import { isBackground } from "./utils/chrome-ext-utils";
-import { injectOptional } from "./utils/tsyringe-utils";
+import { injectOptional } from "./utils/inject-optional";
 
 export interface MessageValidatorManager<T extends MessageData> {
     /**
