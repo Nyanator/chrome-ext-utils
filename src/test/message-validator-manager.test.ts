@@ -1,4 +1,5 @@
 import { chrome } from "jest-chrome";
+import { container } from "tsyringe";
 
 import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
 import {
@@ -9,7 +10,6 @@ import {
 import * as MessageValidator from "../message-validator";
 import * as ChromeExtensionUtils from "../utils/chrome-ext-utils";
 
-import { container } from "tsyringe";
 import * as MockUtils from "./mocks/mock-utils";
 
 describe("MessageValidatorManagerクラスのテスト", () => {
@@ -117,8 +117,7 @@ describe("MessageValidatorManagerクラスのテスト", () => {
     });
 
     it("getLatestValidator 新しいValidatorを返す", async () => {
-        const latestValidator =
-            await messageValidatorManager.getLatestValidator();
+        await messageValidatorManager.getLatestValidator();
         expect(messageValidatorManager["managedValidators"].length).toBe(1);
     });
 

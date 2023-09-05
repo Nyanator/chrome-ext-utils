@@ -4,9 +4,9 @@
 
 import CryptoJS from "crypto-js";
 import "reflect-metadata";
-
-import { Logger } from "logger";
 import { injectable } from "tsyringe";
+
+import { Logger } from "./logger";
 import { SessionStaticValue } from "./session-static-value";
 import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";

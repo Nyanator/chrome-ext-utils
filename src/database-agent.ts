@@ -3,8 +3,8 @@
  */
 import "reflect-metadata";
 
-import { Logger } from "logger";
 import { inject, injectable } from "tsyringe";
+import { Logger } from "./logger";
 import { injectOptional } from "./utils/inject-optional";
 
 export interface DatabaseAgent {
