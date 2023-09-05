@@ -1,6 +1,12 @@
 import { chrome } from "jest-chrome";
+import { container } from "tsyringe";
 
 import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
+import {
+    MessageValidatorManager,
+    MessageValidatorManagerConfig,
+    MessageValidatorManagerImpl,
+} from "../message-validatior-manager";
 import * as MessageValidator from "../message-validator";
 import {
     RuntimeMessageAgent,
@@ -11,12 +17,6 @@ import {
     WindowMessageAgentImpl,
 } from "../window-message-agent";
 
-import { container } from "tsyringe";
-import {
-    MessageValidatorManager,
-    MessageValidatorManagerConfig,
-    MessageValidatorManagerImpl,
-} from "../message-validatior-manager";
 import * as MockUtils from "./mocks/mock-utils";
 
 describe.each([false, true])(
@@ -156,9 +156,11 @@ describe.each([false, true])(
             if (!listerSetAction) {
                 listerSetAction = (resolve) => {
                     // リスナーを設定
-                    windowMssageAgent.addListener((data) => {
-                        expect(data).toEqual(MockUtils.mockMessageData);
-                        resolve();
+                    windowMssageAgent.addListener({
+                        listener: (data) => {
+                            expect(data).toEqual(MockUtils.mockMessageData);
+                            resolve();
+                        },
                     });
                 };
             }
@@ -218,8 +220,10 @@ describe.each([false, true])(
         ): Promise<MessageValidator.MessageData> {
             if (!listerSetAction) {
                 listerSetAction = (resolve) => {
-                    runtimeMessageAgent.addListener(async (data) => {
-                        resolve(data);
+                    runtimeMessageAgent.addListener({
+                        listener: async (data) => {
+                            resolve(data);
+                        },
                     });
                 };
             }
@@ -245,8 +249,10 @@ describe.each([false, true])(
 
         it("無効なランタイムメッセージを拒否するか Rumtime", () => {
             let called = false;
-            runtimeMessageAgent.addListener(async () => {
-                called = true;
+            runtimeMessageAgent.addListener({
+                listener: async () => {
+                    called = true;
+                },
             });
 
             // ランタイムメッセージをシュミレート
@@ -260,8 +266,10 @@ describe.each([false, true])(
 
         it("無効なウィンドウメッセージを拒否するか Window", () => {
             let called = false;
-            windowMssageAgent.addListener(() => {
-                called = true;
+            windowMssageAgent.addListener({
+                listener: () => {
+                    called = true;
+                },
             });
 
             // ウィンドウメッセージをシュミレート
@@ -296,19 +304,25 @@ describe.each([false, true])(
                     };
                 },
                 (reslove) => {
-                    windowMssageAgent.addListener((data) => {
-                        called[0] = true;
-                        reslove(data);
+                    windowMssageAgent.addListener({
+                        listener: (data) => {
+                            called[0] = true;
+                            reslove(data);
+                        },
                     });
 
-                    windowMssageAgent.addListener((data) => {
-                        called[1] = true;
-                        reslove(data);
+                    windowMssageAgent.addListener({
+                        listener: (data) => {
+                            called[1] = true;
+                            reslove(data);
+                        },
                     });
 
-                    windowMssageAgent.addListener((data) => {
-                        called[2] = true;
-                        reslove(data);
+                    windowMssageAgent.addListener({
+                        listener: (data) => {
+                            called[2] = true;
+                            reslove(data);
+                        },
                     });
                 },
             );
@@ -333,19 +347,25 @@ describe.each([false, true])(
                         .calls[0][1];
                 },
                 (reslove) => {
-                    runtimeMessageAgent.addListener(async (data) => {
-                        called[0] = true;
-                        reslove(data);
+                    runtimeMessageAgent.addListener({
+                        listener: async (data) => {
+                            called[0] = true;
+                            reslove(data);
+                        },
                     });
 
-                    runtimeMessageAgent.addListener(async (data) => {
-                        called[1] = true;
-                        reslove(data);
+                    runtimeMessageAgent.addListener({
+                        listener: async (data) => {
+                            called[1] = true;
+                            reslove(data);
+                        },
                     });
 
-                    runtimeMessageAgent.addListener(async (data) => {
-                        called[2] = true;
-                        reslove(data);
+                    runtimeMessageAgent.addListener({
+                        listener: async (data) => {
+                            called[2] = true;
+                            reslove(data);
+                        },
                     });
                 },
             );
@@ -354,13 +374,113 @@ describe.each([false, true])(
             );
         });
 
+        it("指定したチャンネルだけ受信する Window", async () => {
+            const called = [false, false, false];
+            await testWindowMessage(
+                async () => {
+                    // iframeにいるものとして親へのpostMessageをモックする
+                    window.parent.postMessage = jest.fn();
+                    await windowMssageAgent.postMessage({
+                        target: window.parent,
+                        targetOrigin: MockUtils.allowedOrigins[0],
+                        message: {
+                            channel: "channel1",
+                            ...MockUtils.mockMessageData,
+                        },
+                    });
+
+                    // window.parent.postMessageを呼び出したときの引数を取り出す
+                    const postedMessage = (
+                        window.parent.postMessage as jest.Mock
+                    ).mock.calls[0][0];
+                    return {
+                        data: postedMessage,
+                        origin: MockUtils.allowedOrigins[1],
+                    };
+                },
+                (reslove) => {
+                    windowMssageAgent.addListener({
+                        channel: "channel1",
+                        listener: (data) => {
+                            called[0] = true;
+                            reslove(data);
+                        },
+                    });
+
+                    windowMssageAgent.addListener({
+                        listener: (data) => {
+                            called[1] = true;
+                            reslove(data);
+                        },
+                    });
+
+                    windowMssageAgent.addListener({
+                        listener: (data) => {
+                            called[2] = true;
+                            reslove(data);
+                        },
+                    });
+                },
+            );
+            expect(called[0]).toBe(true);
+            expect(called[1]).toBe(false);
+            expect(called[2]).toBe(false);
+        });
+
+        it("指定したチャンネルだけ受信する Runtime", async () => {
+            const called = [false, false, false];
+            await testRuntimeMessage(
+                async () => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (chrome.runtime.sendMessage as any) = jest.fn();
+
+                    await runtimeMessageAgent.sendMessage({
+                        message: {
+                            channel: "channel1",
+                            ...MockUtils.mockMessageData,
+                        },
+                    });
+
+                    // chrome.runtime.sendMessageを呼び出したときの引数を取り出す
+                    return (chrome.runtime.sendMessage as jest.Mock).mock
+                        .calls[0][1];
+                },
+                (reslove) => {
+                    runtimeMessageAgent.addListener({
+                        channel: "channel1",
+                        listener: async (data) => {
+                            called[0] = true;
+                            reslove(data);
+                        },
+                    });
+
+                    runtimeMessageAgent.addListener({
+                        listener: async (data) => {
+                            called[1] = true;
+                            reslove(data);
+                        },
+                    });
+
+                    runtimeMessageAgent.addListener({
+                        listener: async (data) => {
+                            called[2] = true;
+                            reslove(data);
+                        },
+                    });
+                },
+            );
+            expect(called[0]).toBe(true);
+            expect(called[1]).toBe(false);
+            expect(called[2]).toBe(false);
+        });
+
         it("指定したリスナーが削除できる Window", async () => {
             let called = false;
             const listener = () => {
                 called = true;
             };
 
-            windowMssageAgent.addListener(listener);
+            windowMssageAgent.addListener({ listener });
             windowMssageAgent.removeListener(listener);
 
             // ウィンドウメッセージをシュミレート
@@ -377,13 +497,11 @@ describe.each([false, true])(
 
         it("指定したリスナーが削除できる Runtime", async () => {
             let called = false;
-            const listener = async (
-                messageData: MessageValidator.MessageData,
-            ) => {
+            const listener = async () => {
                 called = true;
             };
 
-            runtimeMessageAgent.addListener(listener);
+            runtimeMessageAgent.addListener({ listener });
             runtimeMessageAgent.removeListener(listener);
 
             // ランタイムメッセージをシュミレート
@@ -409,8 +527,8 @@ describe.each([false, true])(
                 called2 = true;
             };
 
-            windowMssageAgent.addListener(listener1);
-            windowMssageAgent.addListener(listener2);
+            windowMssageAgent.addListener({ listener: listener1 });
+            windowMssageAgent.addListener({ listener: listener2 });
             windowMssageAgent.clearListeners();
 
             // ウィンドウメッセージをシュミレート
@@ -430,20 +548,16 @@ describe.each([false, true])(
             let called1 = false;
             let called2 = false;
 
-            const listener1 = async (
-                messageData: MessageValidator.MessageData,
-            ) => {
+            const listener1 = async () => {
                 called1 = true;
             };
 
-            const listener2 = async (
-                messageData: MessageValidator.MessageData,
-            ) => {
-                called1 = true;
+            const listener2 = async () => {
+                called2 = true;
             };
 
-            runtimeMessageAgent.addListener(listener1);
-            runtimeMessageAgent.addListener(listener2);
+            runtimeMessageAgent.addListener({ listener: listener1 });
+            runtimeMessageAgent.addListener({ listener: listener2 });
             runtimeMessageAgent.clearListeners();
 
             // ランタイムメッセージをシュミレート

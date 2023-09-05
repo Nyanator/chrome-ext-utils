@@ -20,7 +20,7 @@ export interface MessageData {
     /**
      * チャンネル識別子。
      */
-    readonly channel: string;
+    readonly channel?: string;
 
     /**
      * メッセージ本文。

@@ -23,7 +23,10 @@ export interface RuntimeMessageAgent<T extends MessageData> {
      * ランタイムメッセージを受信し、復号化してリスナー関数に渡します。
      * @param listener メッセージ受信時に呼び出されるリスナー関数
      */
-    addListener(listener: (messageData: T) => Promise<T | void>): void;
+    addListener(arg: {
+        channel?: string;
+        listener: (messageData: T) => Promise<T | void>;
+    }): void;
 
     /**
      * 指定したリスナーを解除します。
@@ -78,7 +81,10 @@ export class RuntimeMessageAgentImpl<T extends MessageData>
         });
     }
 
-    addListener(listener: (messageData: T) => Promise<T | void>): void {
+    addListener(arg: {
+        channel?: string;
+        listener: (messageData: T) => Promise<T | void>;
+    }): void {
         const newListener = (
             message: unknown,
             sender: chrome.runtime.MessageSender,
@@ -97,7 +103,12 @@ export class RuntimeMessageAgentImpl<T extends MessageData>
                     return;
                 }
 
-                const response = await listener(messageData);
+                const isGlobalChannel = arg.channel;
+                if (!isGlobalChannel && arg.channel !== messageData.channel) {
+                    return;
+                }
+
+                const response = await arg.listener(messageData);
                 sendResponse(response);
             })();
 
@@ -105,7 +116,7 @@ export class RuntimeMessageAgentImpl<T extends MessageData>
             return true;
         };
 
-        this.runtimeListeners.set(listener, newListener);
+        this.runtimeListeners.set(arg.listener, newListener);
         chrome.runtime.onMessage.addListener(newListener);
     }
 

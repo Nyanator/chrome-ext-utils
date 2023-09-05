@@ -42,5 +42,6 @@ describe("DIコンテナのユーティリティ", () => {
             channelData: "test",
         });
         expect(called).toBe(true);
+        expect(crossDispathcer1 === crossDispathcer2);
     });
 });

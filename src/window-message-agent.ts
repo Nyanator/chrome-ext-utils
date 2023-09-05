@@ -17,6 +17,7 @@ export interface WindowMessageAgent<T extends MessageData> {
      * 暗号化されたメッセージを windowに送信します。
      * @param target 送信先の window
      * @param targetOrigin 送信先のオリジン
+     * @param channel 送信先のチャンネル
      * @param message 送信するメッセージデータ
      */
     postMessage(arg: {
@@ -27,9 +28,10 @@ export interface WindowMessageAgent<T extends MessageData> {
 
     /**
      * ウィンドウメッセージを受信し、復号化してリスナー関数に渡します。
+     * @param channel 受信チャンネル
      * @param listener メッセージ受信時に呼び出されるリスナー関数
      */
-    addListener(listener: (event: T) => void): void;
+    addListener(arg: { channel?: string; listener: (event: T) => void }): void;
 
     /**
      * 指定したリスナーを解除します。
@@ -79,7 +81,7 @@ export class WindowMessageAgentImpl<T extends MessageData>
         );
     }
 
-    addListener(listener: (event: T) => void): void {
+    addListener(arg: { channel?: string; listener: (event: T) => void }): void {
         const newListener = async (event: MessageEvent) => {
             const messageData = await assertNotNull(
                 this.validatorManager,
@@ -91,10 +93,15 @@ export class WindowMessageAgentImpl<T extends MessageData>
                 return;
             }
 
-            listener(messageData);
+            const isGlobalChannel = arg.channel;
+            if (!isGlobalChannel && arg.channel !== messageData.channel) {
+                return;
+            }
+
+            arg.listener(messageData);
         };
 
-        this.windowListeners.set(listener, newListener);
+        this.windowListeners.set(arg.listener, newListener);
         window.addEventListener("message", newListener);
     }
 
