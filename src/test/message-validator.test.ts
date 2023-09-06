@@ -1,5 +1,7 @@
 import { container } from "tsyringe";
+
 import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
+import { ConsoleInjectableLogger } from "../logger";
 import {
     MessageData,
     MessageValidator,
@@ -19,6 +21,10 @@ describe("MessageValidatorクラス", () => {
 
     beforeEach(async () => {
         container.clearInstances();
+
+        container.register("Logger", {
+            useClass: ConsoleInjectableLogger,
+        });
 
         container.register("SessionStaticToken", {
             useValue: MockUtils.mockSessionStaticValue,

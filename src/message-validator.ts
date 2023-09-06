@@ -1,5 +1,5 @@
 /**
- * メッセージの正当性を検証
+ * メッセージの正当性を検証します。
  */
 import "reflect-metadata";
 import { inject, injectable } from "tsyringe";
@@ -9,37 +9,6 @@ import { Logger } from "./logger";
 import { SessionStaticValue } from "./session-static-value";
 import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";
-
-/** メッセージオブジェクト */
-export interface MessageData {
-    /**
-     * 拡張機能のID。
-     */
-    readonly runtimeId: string;
-
-    /**
-     * チャンネル識別子。
-     */
-    readonly channel?: string;
-
-    /**
-     * メッセージ本文。
-     */
-    readonly message: string;
-}
-
-/** メッセージの正当性の検証設定 */
-export interface MessageValidatorConfig {
-    /**
-     * 拡張機能のID。
-     */
-    readonly runtimeId: string;
-
-    /**
-     * 許可するオリジンの一覧。
-     */
-    readonly allowedOrigins: string[];
-}
 
 export interface MessageValidator<T extends MessageData> {
     /** 検証設定オブジェクトを返します。 */
@@ -51,14 +20,39 @@ export interface MessageValidator<T extends MessageData> {
     /** 暗号化に使うCrypotAgentオブジェクトを返します。 */
     getCryptoAgent(): CryptoAgent<T> | undefined;
 
-    /**
-     * メッセージが正当か検証します。
-     * @param origin メッセージの送信元オリジン
-     * @param message 検証するメッセージ
-     * @returns メッセージデータ
-     */
-    isValid(arg: { origin: string; message: unknown }): T | undefined;
+    /** メッセージが正当か検証します。*/
+    isValid(validationTarget: SendObject): T | undefined;
 }
+
+/** メッセージオブジェクト(暗号化される部分) */
+export interface MessageData {
+    /** 拡張機能のID */
+    readonly runtimeId: string;
+
+    /** メッセージ本文 */
+    readonly message: string;
+}
+
+/** メッセージの正当性検証設定 */
+export type MessageValidatorConfig = Readonly<{
+    /** 拡張機能のID */
+    runtimeId: string;
+
+    /** 許可するオリジンの一覧 */
+    allowedOrigins: string[];
+}>;
+
+/** APIで実際に送信されるオブジェクト */
+export type SendObject = Readonly<{
+    /** オリジン */
+    origin: string;
+
+    /** チャンネル識別子 */
+    channel?: string;
+
+    /** メッセージ(ここに暗号化されたMessageDataが入る) */
+    message: unknown;
+}>;
 
 @injectable()
 export class MessageValidatorImpl<T extends MessageData>
@@ -69,9 +63,9 @@ export class MessageValidatorImpl<T extends MessageData>
         private readonly config: MessageValidatorConfig,
         @inject("SessionStaticToken")
         private readonly tokenProvider: SessionStaticValue,
+        @inject("Logger") private readonly logger: Logger,
         @injectOptional("CryptoAgent")
-        private readonly cryptoAgent: CryptoAgent<T>,
-        @injectOptional("Logger") private readonly logger?: Logger,
+        private readonly cryptoAgent?: CryptoAgent<T>,
     ) {}
 
     getConfig() {
@@ -86,29 +80,43 @@ export class MessageValidatorImpl<T extends MessageData>
         return this.cryptoAgent;
     }
 
-    isValid(arg: { origin: string; message: unknown }): T | undefined {
+    isValid(validationTarget: SendObject): T | undefined {
         // オリジンの検証
-        if (!this.config.allowedOrigins.includes(arg.origin)) {
+        if (!this.config.allowedOrigins.includes(validationTarget.origin)) {
             return;
         }
 
-        if (typeof arg.message !== "object" || !arg.message) {
+        if (
+            typeof validationTarget.message !== "object" ||
+            !validationTarget.message
+        ) {
             return;
         }
 
         // メッセージの型を明示的に定義
         type TypedMessage = {
             token?: string;
+            channel?: string;
             messageData?: string;
         };
 
-        const typedMessage: TypedMessage = arg.message;
+        // 型検証
+        const typedMessage: TypedMessage = validationTarget.message;
         const invalidToken = assertNotNull(this.tokenProvider).getValue();
 
         if (
             !typedMessage.token ||
             typedMessage.token !== invalidToken ||
             typeof typedMessage.messageData !== "string"
+        ) {
+            return;
+        }
+
+        // チャンネルが一致しない場合無視(グローバルチャンネル以外)
+        const isGlobalChannel = validationTarget.channel;
+        if (
+            !isGlobalChannel &&
+            validationTarget.channel !== typedMessage.channel
         ) {
             return;
         }

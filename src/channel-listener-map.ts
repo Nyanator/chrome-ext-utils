@@ -2,9 +2,9 @@
  * チャンネルを管理するマップ
  */
 import "reflect-metadata";
-import { injectable } from "tsyringe";
+import { inject, injectable } from "tsyringe";
+
 import { Logger } from "./logger";
-import { injectOptional } from "./utils/inject-optional";
 
 /** 型付けされたデータと応答を持つチャンネル(継承して使用してください) */
 export interface ChannelMap {
@@ -15,7 +15,9 @@ export interface ChannelMap {
 }
 
 /** チャンネルデータの型 */
-export type ChannelData<T extends ChannelMap, K extends keyof T> = T[K]["data"];
+export type ChannelData<T extends ChannelMap, K extends keyof T> = Readonly<
+    T[K]["data"]
+>;
 
 /** チャンネル応答の型 */
 export type ChannelResponse<
@@ -53,9 +55,7 @@ export interface ChannelListenerMap<T extends ChannelMap> {
      */
     removeForChannel<K extends keyof T>(channelKey: K): void;
 
-    /**
-     * 全てのリスナーを登録解除します。
-     */
+    /** 全てのリスナーを登録解除します。*/
     clearListeners(): void;
 
     /** 全てのリスナーを取得する */
@@ -66,7 +66,7 @@ export interface ChannelListenerMap<T extends ChannelMap> {
 export class ChanneListenerMapImpl<T extends ChannelMap>
     implements ChannelListenerMap<T>
 {
-    constructor(@injectOptional("Logger") private readonly logger?: Logger) {}
+    constructor(@inject("Logger") private readonly logger: Logger) {}
     private readonly listeners: Map<keyof T, ChannelListener<T, keyof T>[]> =
         new Map();
 

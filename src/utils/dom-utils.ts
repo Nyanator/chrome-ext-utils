@@ -139,10 +139,7 @@ export const isInView = (checkWindow: Window, element: Element): boolean => {
 export const maxZIndex = (parentElement: HTMLElement): number => {
     const zIndexes = Array.from(parentElement.children).map((child) => {
         const elementZIndex = (child as HTMLElement)?.style?.zIndex;
-        /* istanbul ignore next */
-        const childZIndex = elementZIndex ?? 0;
-        const parsedZIndex = parseInt(childZIndex);
-        /* istanbul ignore next */
+        const parsedZIndex = parseInt(elementZIndex);
         const resultZIndex = !isNaN(parsedZIndex) ? parsedZIndex : 0;
 
         return resultZIndex;

@@ -1,8 +1,9 @@
 import { container } from "tsyringe";
+
 import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
 import { MessageData } from "../message-validator";
-
 import { SessionStaticKey } from "../session-static-value";
+
 import {
     initChromeSession,
     initMockCrypto,

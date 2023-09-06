@@ -4,8 +4,8 @@
 import "reflect-metadata";
 
 import { inject, injectable } from "tsyringe";
+
 import { Logger } from "./logger";
-import { injectOptional } from "./utils/inject-optional";
 
 export interface DatabaseAgent {
     /**
@@ -39,10 +39,10 @@ export interface DatabaseAgent {
 }
 
 /** 構築設定 */
-export interface DatabaseAgentConfig {
+export type DatabaseAgentConfig = Readonly<{
     databaseName: string; // データベースの名前
     storeName: string; // オブジェクトストア（テーブル）の名前
-}
+}>;
 
 @injectable()
 export class IndexdDBDatabaseAgent implements DatabaseAgent {
@@ -51,14 +51,13 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
     constructor(
         @inject("DatabaseAgentConfig")
         private readonly config: DatabaseAgentConfig,
-        @injectOptional("Logger") private readonly logger?: Logger,
+        @inject("Logger") private readonly logger: Logger,
     ) {}
 
     async open(): Promise<void> {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(this.config.databaseName);
 
-            /* istanbul ignore next */
             request.onerror = () => {
                 reject(new Error());
             };
@@ -87,7 +86,6 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
             const objectStore = transaction.objectStore(this.config.storeName);
             const request = objectStore.put(arg.data, arg.key);
 
-            /* istanbul ignore next */
             request.onerror = () => {
                 reject(new Error());
             };
@@ -107,7 +105,6 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
             const objectStore = transaction.objectStore(this.config.storeName);
             const request = objectStore.get(key);
 
-            /* istanbul ignore next */
             request.onerror = () => {
                 reject(new Error());
             };
@@ -127,7 +124,6 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
             const objectStore = transaction.objectStore(this.config.storeName);
             const request = objectStore.delete(key);
 
-            /* istanbul ignore next */
             request.onerror = () => {
                 reject(new Error());
             };

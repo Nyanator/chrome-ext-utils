@@ -148,8 +148,18 @@ describe("DOM操作ユーティリティ", () => {
         child1.style.zIndex = "1";
         const child2 = document.createElement("div");
         child2.style.zIndex = "10";
+
+        // ZインデックスはstyleなのでSVGなどには存在しない
+        const svg = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "svg",
+        );
+        svg.setAttribute("width", "100");
+        svg.setAttribute("height", "100");
+
         parent.appendChild(child1);
         parent.appendChild(child2);
+        parent.appendChild(svg);
         expect(DomUtils.maxZIndex(parent)).toBe(10);
     });
 

@@ -7,8 +7,7 @@ import { inject, injectable } from "tsyringe";
 
 import { Logger } from "./logger";
 import { MessageValidatorManager } from "./message-validatior-manager";
-import { MessageData } from "./message-validator";
-import { injectOptional } from "./utils/inject-optional";
+import { MessageData, MessageValidatorConfig } from "./message-validator";
 import { assertNotNull } from "./utils/ts-utils";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ウィンドウ) */
@@ -23,6 +22,7 @@ export interface WindowMessageAgent<T extends MessageData> {
     postMessage(arg: {
         target: Window;
         targetOrigin: string;
+        channel?: string;
         message: T;
     }): Promise<void>;
 
@@ -33,14 +33,10 @@ export interface WindowMessageAgent<T extends MessageData> {
      */
     addListener(arg: { channel?: string; listener: (event: T) => void }): void;
 
-    /**
-     * 指定したリスナーを解除します。
-     */
+    /** 指定したリスナーを解除します。*/
     removeListener(listener: (event: T) => void): void;
 
-    /**
-     * リスナーをすべて解除します。
-     */
+    /** リスナーをすべて解除します。*/
     clearListeners(): void;
 }
 
@@ -56,14 +52,21 @@ export class WindowMessageAgentImpl<T extends MessageData>
     constructor(
         @inject("MessageValidatorManager")
         private readonly validatorManager: MessageValidatorManager<T>,
-        @injectOptional("Logger") private readonly logger?: Logger,
+        @inject("MessageValidatorConfig")
+        private readonly validatorConfig: MessageValidatorConfig,
+        @inject("Logger") private readonly logger: Logger,
     ) {}
 
     async postMessage(arg: {
         target: Window;
+        channel?: string;
         targetOrigin: string;
         message: T;
     }): Promise<void> {
+        if (!this.validatorConfig.allowedOrigins.includes(arg.targetOrigin)) {
+            throw new Error(`Invalid targetOrigin: ${arg.targetOrigin}`);
+        }
+
         const latestValidator =
             await this.validatorManager.getLatestValidator();
 
@@ -74,8 +77,9 @@ export class WindowMessageAgentImpl<T extends MessageData>
 
         arg.target.postMessage(
             {
-                messageData: messageData,
                 token: latestToken,
+                channel: arg.channel,
+                messageData: messageData,
             },
             arg.targetOrigin,
         );
@@ -87,14 +91,10 @@ export class WindowMessageAgentImpl<T extends MessageData>
                 this.validatorManager,
             ).processValidation({
                 origin: event.origin,
+                channel: arg.channel,
                 message: event.data,
             });
             if (!messageData) {
-                return;
-            }
-
-            const isGlobalChannel = arg.channel;
-            if (!isGlobalChannel && arg.channel !== messageData.channel) {
                 return;
             }
 

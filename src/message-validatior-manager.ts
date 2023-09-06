@@ -1,42 +1,31 @@
 /**
- * MessageValidatorを管理し、トークンを自動で更新
+ * MessageValidatorを管理し、トークンを自動で更新します。
  */
 import "reflect-metadata";
 import { container, inject, injectable } from "tsyringe";
 
 import { Logger } from "./logger";
-import { MessageData, MessageValidator } from "./message-validator";
+import { MessageData, MessageValidator, SendObject } from "./message-validator";
 import { isBackground } from "./utils/chrome-ext-utils";
-import { injectOptional } from "./utils/inject-optional";
 
 export interface MessageValidatorManager<T extends MessageData> {
-    /**
-     * 送信内容の検証をします。
-     * @param origin 送信元オリジン
-     * @param message 検証対象のmessage
-     * @returns 検証に成功した場合Tのインスタンス、それ以外undefined
-     */
-    processValidation(arg: {
-        origin: string;
-        message: unknown;
-    }): Promise<T | undefined>;
+    /** メッセージが正当か検証します。*/
+    processValidation(validationTarget: SendObject): Promise<T | undefined>;
 
-    /**
-     * 管理下のValidatorを更新します。
-     */
+    /** 管理下のValidatorを更新します。*/
     refreshValidators(): Promise<void>;
 
-    /**
-     * 最新のValidatorを返します。
-     */
+    /** 最新のValidatorを返します。*/
     getLatestValidator(): Promise<MessageValidator<T>>;
 }
 
 /** 構築設定 */
-export interface MessageValidatorManagerConfig {
-    maxMessageValidators: number; // Validatorオブジェクトの最大保持数
-    validatorRefreshInterval: number; // Validatorオブジェクトの更新間隔(分)
-}
+export type MessageValidatorManagerConfig = Readonly<{
+    /** Validatorオブジェクトの最大保持数 */
+    maxMessageValidators: number;
+    /** Validatorオブジェクトの更新間隔(分) */
+    validatorRefreshInterval: number;
+}>;
 
 @injectable()
 export class MessageValidatorManagerImpl<T extends MessageData>
@@ -47,7 +36,7 @@ export class MessageValidatorManagerImpl<T extends MessageData>
     constructor(
         @inject("MessageValidatorManagerConfig")
         private readonly config: MessageValidatorManagerConfig,
-        @injectOptional("Logger") private readonly logger?: Logger,
+        @inject("Logger") private readonly logger: Logger,
     ) {
         if (isBackground()) {
             chrome.alarms.create("refreshSession", {
@@ -66,18 +55,15 @@ export class MessageValidatorManagerImpl<T extends MessageData>
         }
     }
 
-    async processValidation(arg: {
-        origin: string;
-        message: unknown;
-    }): Promise<T | undefined> {
+    async processValidation(
+        validationTarget: SendObject,
+    ): Promise<T | undefined> {
         // 非同期通信ではトークンの更新タイミングと送信が重なるとエラーとなってしまう
         // valiatorオブジェクトのリストを用意して確認することで通信の安定性を実現している
 
         // 管理下にあるValidatorで検証が通る場合はOK
-        const managedValidatorsResult = this.managedValidatorsValidation({
-            origin: arg.origin,
-            message: arg.message,
-        });
+        const managedValidatorsResult =
+            this.managedValidatorsValidation(validationTarget);
         if (managedValidatorsResult) {
             return managedValidatorsResult;
         }
@@ -87,10 +73,7 @@ export class MessageValidatorManagerImpl<T extends MessageData>
         this.pushValidator(newValidator);
 
         // 最終的な検証結果は新規作成したValidatorで決定する
-        const newValidatorResult = newValidator.isValid({
-            origin: arg.origin,
-            message: arg.message,
-        });
+        const newValidatorResult = newValidator.isValid(validationTarget);
         return newValidatorResult;
     }
 
@@ -117,16 +100,12 @@ export class MessageValidatorManagerImpl<T extends MessageData>
         return this.managedValidators.slice(-1)[0];
     }
 
-    private managedValidatorsValidation(arg: {
-        origin: string;
-        message: unknown;
-    }): T | undefined {
+    private managedValidatorsValidation(
+        validationTarget: SendObject,
+    ): T | undefined {
         // Validatorリストを逆順にして、最新のValidatorから検証を試みます
         for (const validator of [...this.managedValidators].reverse()) {
-            const validationResult = validator.isValid({
-                origin: arg.origin,
-                message: arg.message,
-            });
+            const validationResult = validator.isValid(validationTarget);
             if (validationResult) {
                 return validationResult;
             }

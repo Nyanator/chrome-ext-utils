@@ -34,9 +34,9 @@ export interface CryptoAgent<T> {
 @injectable()
 export class AESCryptoAgent<T> implements CryptoAgent<T> {
     constructor(
+        @injectOptional("Logger") private readonly logger: Logger,
         @injectOptional("SessionStaticKey")
         private readonly keyProvider?: SessionStaticValue,
-        @injectOptional("Logger") private readonly logger?: Logger,
     ) {}
 
     getProvider() {

@@ -1,9 +1,15 @@
 import { container } from "tsyringe";
+
 import { ChanneListenerMapImpl } from "../channel-listener-map";
 import { CrossDispatcherImpl } from "../cross-dispathcher";
 import { AESCryptoAgent } from "../crypto-agent";
-import { DatabaseAgent, IndexdDBDatabaseAgent } from "../database-agent";
-import { ConsoleLogger } from "../logger";
+import {
+    DatabaseAgent,
+    DatabaseAgentConfig,
+    IndexdDBDatabaseAgent,
+} from "../database-agent";
+import { DisplayAlertErrorObserver } from "../error-observer";
+import { ConsoleInjectableLogger } from "../logger";
 import {
     MessageValidatorManagerConfig,
     MessageValidatorManagerImpl,
@@ -16,10 +22,16 @@ import { RuntimeMessageAgentImpl } from "../runtime-message-agent";
 import { SessionStaticKey, SessionStaticToken } from "../session-static-value";
 import { WindowMessageAgentImpl } from "../window-message-agent";
 
+import { ErrorListener } from "./error-listener";
+
 /**
  * DIコンテナを初期化します。
  */
-export const initializeDIContainer = (allowedOrigins: string[]): void => {
+export const initializeDIContainer = (arg: {
+    databaseName: string;
+    storeName: string;
+    allowedOrigins: string[];
+}): void => {
     container.clearInstances();
 
     container.register("ChannelListenerMap", {
@@ -32,12 +44,27 @@ export const initializeDIContainer = (allowedOrigins: string[]): void => {
         useClass: AESCryptoAgent,
     });
 
+    container.register<DatabaseAgentConfig>("DatabaseAgentConfig", {
+        useValue: {
+            databaseName: arg.databaseName,
+            storeName: arg.storeName,
+        },
+    });
+
     container.register<DatabaseAgent>("DatabaseAgent", {
         useClass: IndexdDBDatabaseAgent,
     });
 
+    container.register("ErrorListener", {
+        useClass: ErrorListener,
+    });
+
+    container.register("ErrorObserver", {
+        useClass: DisplayAlertErrorObserver,
+    });
+
     container.register("Logger", {
-        useClass: ConsoleLogger,
+        useClass: ConsoleInjectableLogger,
     });
 
     container.register<MessageValidatorManagerConfig>(
@@ -58,7 +85,7 @@ export const initializeDIContainer = (allowedOrigins: string[]): void => {
     container.register<MessageValidatorConfig>("MessageValidatorConfig", {
         useValue: {
             runtimeId: chrome.runtime.id,
-            allowedOrigins: allowedOrigins,
+            allowedOrigins: arg.allowedOrigins,
         },
     });
 

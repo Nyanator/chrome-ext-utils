@@ -19,7 +19,7 @@ export const generateSessionStaticValue = async (
     regenerate: boolean,
 ): Promise<string> => {
     if (isBackground()) {
-        chrome.storage.session.setAccessLevel({
+        await chrome.storage.session.setAccessLevel({
             accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
         });
     }

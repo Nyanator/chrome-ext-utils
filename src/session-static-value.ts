@@ -6,9 +6,7 @@ import * as ChromeExtensionUtils from "./utils/chrome-ext-utils";
 
 /** セッションで静的な値 */
 export interface SessionStaticValue {
-    /**
-     * 保持している値を返します。
-     */
+    /** 保持している値を返します。*/
     getValue(): string;
 
     /**

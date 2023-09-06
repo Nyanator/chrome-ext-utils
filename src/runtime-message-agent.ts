@@ -7,20 +7,25 @@ import { inject, injectable } from "tsyringe";
 import { Logger } from "./logger";
 import { MessageValidatorManager } from "./message-validatior-manager";
 import { MessageData } from "./message-validator";
-import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ランタイム) */
 export interface RuntimeMessageAgent<T extends MessageData> {
     /**
      * 暗号化されたランタイムメッセージを送信します。
+     * @param channel 送信チャンネル
      * @param message 送信するメッセージデータ
      * @param tabId 送信先タブの ID
      */
-    sendMessage(arg: { message: T; tabId?: number }): Promise<T | void>;
+    sendMessage(arg: {
+        channel?: string;
+        message: T;
+        tabId?: number;
+    }): Promise<T | void>;
 
     /**
      * ランタイムメッセージを受信し、復号化してリスナー関数に渡します。
+     * @param channel 受信チャンネル
      * @param listener メッセージ受信時に呼び出されるリスナー関数
      */
     addListener(arg: {
@@ -28,14 +33,10 @@ export interface RuntimeMessageAgent<T extends MessageData> {
         listener: (messageData: T) => Promise<T | void>;
     }): void;
 
-    /**
-     * 指定したリスナーを解除します。
-     */
+    /** 指定したリスナーを解除します。*/
     removeListener(listener: (messageData: T) => Promise<T | void>): void;
 
-    /**
-     * リスナーをすべて解除します。
-     */
+    /** リスナーをすべて解除します。*/
     clearListeners(): void;
 }
 
@@ -55,10 +56,14 @@ export class RuntimeMessageAgentImpl<T extends MessageData>
     constructor(
         @inject("MessageValidatorManager")
         private readonly validatorManager: MessageValidatorManager<T>,
-        @injectOptional("Logger") private readonly logger?: Logger,
+        @inject("Logger") private readonly logger: Logger,
     ) {}
 
-    async sendMessage(arg: { message: T; tabId?: number }): Promise<T | void> {
+    async sendMessage(arg: {
+        channel?: string;
+        message: T;
+        tabId?: number;
+    }): Promise<T | void> {
         const latestValidator =
             await this.validatorManager.getLatestValidator();
 
@@ -70,14 +75,16 @@ export class RuntimeMessageAgentImpl<T extends MessageData>
         if (!arg.tabId) {
             const latestRuntimeId = latestValidator.getConfig().runtimeId;
             return chrome.runtime.sendMessage(latestRuntimeId, {
-                messageData: messageData,
                 token: latestToken,
+                channel: arg.channel,
+                messageData: messageData,
             });
         }
 
         return chrome.tabs.sendMessage(arg.tabId, {
-            messageData: messageData,
             token: latestToken,
+            channel: arg.channel,
+            messageData: messageData,
         });
     }
 
@@ -96,15 +103,11 @@ export class RuntimeMessageAgentImpl<T extends MessageData>
                     this.validatorManager,
                 ).processValidation({
                     origin: senderOrigin,
+                    channel: arg.channel,
                     message: message,
                 });
 
                 if (!messageData) {
-                    return;
-                }
-
-                const isGlobalChannel = arg.channel;
-                if (!isGlobalChannel && arg.channel !== messageData.channel) {
                     return;
                 }
 

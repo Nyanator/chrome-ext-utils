@@ -1,15 +1,22 @@
 import { container } from "tsyringe";
+
 import { ChanneListenerMapImpl, ChannelMap } from "../channel-listener-map";
 import {
     CrossDispatcher,
     CrossDispatcherConfig,
     CrossDispatcherImpl,
 } from "../cross-dispathcher";
+import { ConsoleInjectableLogger } from "../logger";
+
 import { TestChannelMap, TestInterface, TestType } from "./mock-interface";
 
 describe("CrossDispatcherクラス", () => {
     beforeEach(() => {
         container.clearInstances();
+
+        container.register("Logger", {
+            useClass: ConsoleInjectableLogger,
+        });
 
         container.register("ChannelListenerMap", {
             useClass: ChanneListenerMapImpl<TestChannelMap>,
@@ -469,7 +476,7 @@ describe("CrossDispatcherクラス", () => {
         expect(listenerCalled).toBe(false);
     });
 
-    it("全てのリスナーを解除できる", () => {
+    it("全てのリスナーを解除できる", async () => {
         const dispatcher =
             container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
         let listener1Called = false;
@@ -485,18 +492,27 @@ describe("CrossDispatcherクラス", () => {
         });
 
         dispatcher.clearListeners();
-        dispatcher.dispatch({ channelKey: "channel1", channelData: {} });
-        dispatcher.dispatch({ channelKey: "channel2", channelData: {} });
+        await expect(
+            dispatcher.dispatch({ channelKey: "channel1", channelData: {} }),
+        ).rejects.toThrow();
+        await expect(
+            dispatcher.dispatch({ channelKey: "channel2", channelData: {} }),
+        ).rejects.toThrow();
         expect(listener1Called).toBe(false);
         expect(listener2Called).toBe(false);
     });
 
     /* eslint-disable */
     it("ディスパッチの型推論が働いているか", async () => {
+        container.register<CrossDispatcherConfig>("CrossDispatcherConfig", {
+            useValue: { strictMode: false },
+        });
+
         const dispatcher =
             container.resolve<CrossDispatcher<TestChannelMap>>(
                 "CrossDispatcher",
             );
+
         // 型推論が働けばコンパイルが通る
         const numbers: number[] = await dispatcher.dispatch({
             channelKey: "channel1",

@@ -2,6 +2,7 @@ import { chrome } from "jest-chrome";
 import { container } from "tsyringe";
 
 import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
+import { ConsoleInjectableLogger } from "../logger";
 import {
     MessageValidatorManager,
     MessageValidatorManagerConfig,
@@ -29,6 +30,10 @@ describe.each([false, true])(
 
         beforeEach(async () => {
             container.clearInstances();
+
+            container.register("Logger", {
+                useClass: ConsoleInjectableLogger,
+            });
 
             container.register("SessionStaticToken", {
                 useValue: MockUtils.mockSessionStaticValue,
@@ -383,10 +388,8 @@ describe.each([false, true])(
                     await windowMssageAgent.postMessage({
                         target: window.parent,
                         targetOrigin: MockUtils.allowedOrigins[0],
-                        message: {
-                            channel: "channel1",
-                            ...MockUtils.mockMessageData,
-                        },
+                        channel: "channel1",
+                        message: MockUtils.mockMessageData,
                     });
 
                     // window.parent.postMessageを呼び出したときの引数を取り出す
@@ -435,10 +438,8 @@ describe.each([false, true])(
                     (chrome.runtime.sendMessage as any) = jest.fn();
 
                     await runtimeMessageAgent.sendMessage({
-                        message: {
-                            channel: "channel1",
-                            ...MockUtils.mockMessageData,
-                        },
+                        channel: "channel1",
+                        message: MockUtils.mockMessageData,
                     });
 
                     // chrome.runtime.sendMessageを呼び出したときの引数を取り出す
@@ -472,6 +473,16 @@ describe.each([false, true])(
             expect(called[0]).toBe(true);
             expect(called[1]).toBe(false);
             expect(called[2]).toBe(false);
+        });
+
+        it("許可されていないオリジンへの送信は例外になる", async () => {
+            expect(
+                windowMssageAgent.postMessage({
+                    target: window,
+                    targetOrigin: MockUtils.invalidOrigin,
+                    message: MockUtils.mockMessageData,
+                }),
+            ).rejects.toThrow();
         });
 
         it("指定したリスナーが削除できる Window", async () => {

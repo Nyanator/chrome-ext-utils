@@ -1,47 +1,150 @@
-import "reflect-metadata";
 import { container } from "tsyringe";
-import { ChannelMap } from "../../channel-listener-map";
-import { CrossDispatcher } from "../../cross-dispathcher";
-import { MessageData } from "../../message-validator";
-import { RuntimeMessageAgent } from "../../runtime-message-agent";
-import * as DIUtils from "../../utils/di-container-utils";
-import * as MockUtils from "../mocks/mock-utils";
 
-describe("DIコンテナのユーティリティ", () => {
-    it("initializeDIContainer DIコンテナに各クラスを登録します", async () => {
-        DIUtils.initializeDIContainer(MockUtils.allowedOrigins);
+import {
+    AESCryptoAgent,
+    ChanneListenerMapImpl,
+    ChannelMap,
+    ConsoleInjectableLogger,
+    CrossDispatcherImpl,
+    DatabaseAgent,
+    DisplayAlertErrorObserver,
+    ErrorListener,
+    ErrorObserver,
+    IndexdDBDatabaseAgent,
+    Logger,
+    MessageData,
+    MessageValidator,
+    MessageValidatorConfig,
+    MessageValidatorImpl,
+    MessageValidatorManager,
+    MessageValidatorManagerConfig,
+    MessageValidatorManagerImpl,
+    RuntimeMessageAgentImpl,
+    SessionStaticKey,
+    SessionStaticToken,
+    WindowMessageAgentImpl,
+} from "../../index";
+import { initializeDIContainer } from "../../utils/di-container-utils";
 
-        const runtimeMessageAgent1 = container.resolve<
-            RuntimeMessageAgent<MessageData>
-        >("RuntimeMessageAgent");
+describe("initializeDIContainer関数の結合テスト", () => {
+    const allowedOrigins = ["origin1", "origin2"];
 
-        const runtimeMessageAgent2 = container.resolve<
-            RuntimeMessageAgent<MessageData>
-        >("RuntimeMessageAgent");
-
-        // ValidatorManagerはシングルトン
-        expect(
-            runtimeMessageAgent1["validatorManager"] ===
-                runtimeMessageAgent2["validatorManager"],
-        ).toBe(true);
-
-        let called = false;
-        const crossDispathcer1 =
-            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
-        crossDispathcer1.channel({
-            channel1: () => {
-                called = true;
-            },
+    beforeEach(() => {
+        initializeDIContainer({
+            databaseName: "dbName",
+            storeName: "storeName",
+            allowedOrigins: allowedOrigins,
         });
+    });
 
-        const crossDispathcer2 =
-            container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
+    it("DIコンテナにChannelListenerMapが正しく登録されていることを確認する", () => {
+        const instance =
+            container.resolve<ChanneListenerMapImpl<ChannelMap>>(
+                "ChannelListenerMap",
+            );
+        expect(instance).toBeInstanceOf(ChanneListenerMapImpl);
+    });
 
-        await crossDispathcer2.dispatch({
-            channelKey: "channel1",
-            channelData: "test",
-        });
-        expect(called).toBe(true);
-        expect(crossDispathcer1 === crossDispathcer2);
+    it("DIコンテナにCrossDispatcherがシングルトンとして正しく登録されていることを確認する", () => {
+        const instance1 =
+            container.resolve<CrossDispatcherImpl<ChannelMap>>(
+                "CrossDispatcher",
+            );
+        const instance2 =
+            container.resolve<CrossDispatcherImpl<ChannelMap>>(
+                "CrossDispatcher",
+            );
+        expect(instance1).toBeInstanceOf(CrossDispatcherImpl);
+        expect(instance2).toBeInstanceOf(CrossDispatcherImpl);
+        expect(instance1).toBe(instance2);
+    });
+
+    it("DIコンテナにCryptoAgentが正しく登録されていることを確認する", () => {
+        const instance =
+            container.resolve<AESCryptoAgent<MessageData>>("CryptoAgent");
+        expect(instance).toBeInstanceOf(AESCryptoAgent);
+    });
+
+    it("DIコンテナにDatabaseAgentが正しく登録されていることを確認する", () => {
+        const instance = container.resolve<DatabaseAgent>("DatabaseAgent");
+        expect(instance).toBeInstanceOf(IndexdDBDatabaseAgent);
+    });
+
+    it("DIコンテナにErrorListenerが正しく登録されていることを確認する", () => {
+        const instance = container.resolve<ErrorListener>("ErrorListener");
+        expect(instance).toBeInstanceOf(ErrorListener);
+    });
+
+    it("DIコンテナにErrorObserverが正しく登録されていることを確認する", () => {
+        const instance = container.resolve<ErrorObserver>("ErrorObserver");
+        expect(instance).toBeInstanceOf(DisplayAlertErrorObserver);
+    });
+
+    it("DIコンテナにLoggerが正しく登録されていることを確認する", () => {
+        const instance = container.resolve<Logger>("Logger");
+        expect(instance).toBeInstanceOf(ConsoleInjectableLogger);
+    });
+
+    it("DIコンテナにMessageValidatorManagerConfigが正しく登録されていることを確認する", () => {
+        const config = container.resolve<MessageValidatorManagerConfig>(
+            "MessageValidatorManagerConfig",
+        );
+        expect(config.maxMessageValidators).toBe(3);
+        expect(config.validatorRefreshInterval).toEqual(1);
+    });
+
+    it("DIコンテナにMessageValidatorConfigが正しく登録されていることを確認する", () => {
+        const config = container.resolve<MessageValidatorConfig>(
+            "MessageValidatorConfig",
+        );
+        expect(config.runtimeId).toBe(chrome.runtime.id);
+        expect(config.allowedOrigins).toEqual(allowedOrigins);
+    });
+
+    it("DIコンテナにMessageValidatorManagerがシングルトンとして正しく登録されていることを確認する", () => {
+        const instance1 = container.resolve<
+            MessageValidatorManager<MessageData>
+        >("MessageValidatorManager");
+        const instance2 = container.resolve<
+            MessageValidatorManager<MessageData>
+        >("MessageValidatorManager");
+        expect(instance1).toBeInstanceOf(MessageValidatorManagerImpl);
+        expect(instance2).toBeInstanceOf(MessageValidatorManagerImpl);
+        expect(instance1).toBe(instance2);
+    });
+
+    it("DIコンテナにMessageValidatorが正しく登録されていることを確認する", () => {
+        const instance =
+            container.resolve<MessageValidator<MessageData>>(
+                "MessageValidator",
+            );
+        expect(instance).toBeInstanceOf(MessageValidatorImpl);
+    });
+
+    it("DIコンテナにRuntimeMessageAgentが正しく登録されていることを確認する", () => {
+        const instance = container.resolve<
+            RuntimeMessageAgentImpl<MessageData>
+        >("RuntimeMessageAgent");
+        expect(instance).toBeInstanceOf(RuntimeMessageAgentImpl);
+    });
+
+    it("DIコンテナにSessionStaticTokenが正しく登録されていることを確認する", () => {
+        const instance =
+            container.resolve<SessionStaticToken>("SessionStaticToken");
+        expect(instance).toBeInstanceOf(SessionStaticToken);
+    });
+
+    it("DIコンテナにSessionStaticKeyが正しく登録されていることを確認する", () => {
+        const instance =
+            container.resolve<SessionStaticKey>("SessionStaticKey");
+        expect(instance).toBeInstanceOf(SessionStaticKey);
+    });
+
+    it("DIコンテナにWindowMessageAgentが正しく登録されていることを確認する", () => {
+        const instance =
+            container.resolve<WindowMessageAgentImpl<MessageData>>(
+                "WindowMessageAgent",
+            );
+        expect(instance).toBeInstanceOf(WindowMessageAgentImpl);
     });
 });

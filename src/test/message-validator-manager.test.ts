@@ -2,6 +2,7 @@ import { chrome } from "jest-chrome";
 import { container } from "tsyringe";
 
 import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
+import { ConsoleInjectableLogger } from "../logger";
 import {
     MessageValidatorManager,
     MessageValidatorManagerConfig,
@@ -23,6 +24,10 @@ describe("MessageValidatorManagerクラスのテスト", () => {
 
     beforeEach(async () => {
         container.clearInstances();
+
+        container.register("Logger", {
+            useClass: ConsoleInjectableLogger,
+        });
 
         container.register("SessionStaticToken", {
             useValue: MockUtils.mockSessionStaticValue,

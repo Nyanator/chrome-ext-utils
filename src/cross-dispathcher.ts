@@ -31,9 +31,9 @@ export interface CrossDispatcher<T extends ChannelMap>
 }
 
 /** 構築設定 */
-export interface CrossDispatcherConfig {
+export type CrossDispatcherConfig = Readonly<{
     strictMode?: boolean; // 例外安全にしたければfalse、それ以外は例外を送出します
-}
+}>;
 
 @injectable()
 export class CrossDispatcherImpl<T extends ChannelMap>
@@ -44,9 +44,9 @@ export class CrossDispatcherImpl<T extends ChannelMap>
     constructor(
         @inject("ChannelListenerMap")
         private readonly channelListenerMap: ChannelListenerMap<T>,
+        @inject("Logger") private readonly logger: Logger,
         @injectOptional("CrossDispatcherConfig")
         private readonly config?: CrossDispatcherConfig,
-        @injectOptional("Logger") private readonly logger?: Logger,
     ) {}
 
     channel<K extends keyof T>(channelMap: {
@@ -126,9 +126,10 @@ export class CrossDispatcherImpl<T extends ChannelMap>
     }
 
     private handleError(message: string) {
-        if (this.config?.strictMode) {
+        this.logger.error(message);
+
+        if (this.config?.strictMode !== false) {
             throw new Error(message);
         }
-        this.logger?.error(message);
     }
 }

@@ -1,6 +1,7 @@
 import { container } from "tsyringe";
-import { ElementLoader } from "../element-loader";
+
 import { loadResourceText } from "../utils/chrome-ext-utils";
+import { ElementLoader } from "../utils/element-loader";
 
 // モック関数を定義
 jest.mock("../utils/chrome-ext-utils");

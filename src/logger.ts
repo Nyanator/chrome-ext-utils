@@ -13,16 +13,11 @@ export interface Logger {
     error(message: string, ...args: unknown[]): void;
 }
 
-/** ファクトリ関数 */
-export const Logger = (): Logger => {
-    return new ConsoleLogger();
-};
-
 /**
  * コンソール出力のLogger実装
  */
 @injectable()
-export class ConsoleLogger implements Logger {
+export class ConsoleInjectableLogger implements Logger {
     debug(message: string, ...args: unknown[]): void {
         console.debug(message, ...args);
     }
