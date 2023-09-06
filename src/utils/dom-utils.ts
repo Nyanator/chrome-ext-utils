@@ -4,16 +4,13 @@
  * @param element 挿入先の要素
  * @param appendElement 追加する要素
  */
-export const appendElementToHead = (
-    element: HTMLElement,
-    appendElement: HTMLElement,
-) => {
-    let head = element.querySelector("head");
-    if (!head) {
-        head = document.createElement("head");
-        element.insertBefore(head, element.firstChild);
-    }
-    head.appendChild(appendElement);
+export const appendElementToHead = (element: HTMLElement, appendElement: HTMLElement) => {
+  let head = element.querySelector("head");
+  if (!head) {
+    head = document.createElement("head");
+    element.insertBefore(head, element.firstChild);
+  }
+  head.appendChild(appendElement);
 };
 
 /**
@@ -22,9 +19,9 @@ export const appendElementToHead = (
  * @param scriptText 追加するスクリプトのテキスト
  */
 export const appendScriptText = (element: HTMLElement, scriptText: string) => {
-    const script = document.createElement("script");
-    script.textContent = scriptText;
-    element.appendChild(script);
+  const script = document.createElement("script");
+  script.textContent = scriptText;
+  element.appendChild(script);
 };
 
 /**
@@ -32,13 +29,10 @@ export const appendScriptText = (element: HTMLElement, scriptText: string) => {
  * @param element 挿入先の要素
  * @param styleText 追加するスタイルのテキスト
  */
-export const appendStyleTextToHead = (
-    element: HTMLElement,
-    styleText: string,
-) => {
-    const style = document.createElement("style");
-    style.textContent = styleText;
-    appendElementToHead(element, style);
+export const appendStyleTextToHead = (element: HTMLElement, styleText: string) => {
+  const style = document.createElement("style");
+  style.textContent = styleText;
+  appendElementToHead(element, style);
 };
 
 /**
@@ -48,14 +42,14 @@ export const appendStyleTextToHead = (
  * @returns ドキュメントの高さ
  */
 export const documentHeight = (doc: Document) => {
-    const resultHeight = Math.max.apply(null, [
-        doc.body.clientHeight,
-        doc.body.scrollHeight,
-        doc.documentElement.scrollHeight,
-        doc.documentElement.clientHeight,
-    ]);
+  const resultHeight = Math.max.apply(null, [
+    doc.body.clientHeight,
+    doc.body.scrollHeight,
+    doc.documentElement.scrollHeight,
+    doc.documentElement.clientHeight,
+  ]);
 
-    return resultHeight;
+  return resultHeight;
 };
 
 /**
@@ -65,18 +59,18 @@ export const documentHeight = (doc: Document) => {
  * @returns 一致する親要素またはnull
  */
 export const findMatchParent = (
-    element: HTMLElement,
-    query: string,
+  element: HTMLElement,
+  query: string,
 ): HTMLElement | null => {
-    let parent = element.parentElement;
-    while (parent) {
-        if (parent.matches(query)) {
-            return parent;
-        }
-        parent = parent.parentElement;
+  let parent = element.parentElement;
+  while (parent) {
+    if (parent.matches(query)) {
+      return parent;
     }
+    parent = parent.parentElement;
+  }
 
-    return null;
+  return null;
 };
 
 /**
@@ -84,18 +78,13 @@ export const findMatchParent = (
  * @param htmlElement 処理対象のHTML要素
  * @returns 見つかった祖先要素またはnull
  */
-export const findParentPreElement = (
-    htmlElement: HTMLElement,
-): HTMLPreElement | null => {
-    if (!(htmlElement instanceof HTMLPreElement)) {
-        const preElement = findMatchParent(
-            htmlElement,
-            "pre",
-        ) as HTMLPreElement;
-        return preElement;
-    }
+export const findParentPreElement = (htmlElement: HTMLElement): HTMLPreElement | null => {
+  if (!(htmlElement instanceof HTMLPreElement)) {
+    const preElement = findMatchParent(htmlElement, "pre") as HTMLPreElement;
+    return preElement;
+  }
 
-    return htmlElement;
+  return htmlElement;
 };
 
 /**
@@ -104,11 +93,11 @@ export const findParentPreElement = (
  * @returns パースされたHTML要素
  */
 export const htmlTextToHtmlElement = (htmlText: string): HTMLElement => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlText, "text/html");
-    const htmlElement = doc.documentElement;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlText, "text/html");
+  const htmlElement = doc.documentElement;
 
-    return htmlElement;
+  return htmlElement;
 };
 
 /**
@@ -118,17 +107,16 @@ export const htmlTextToHtmlElement = (htmlText: string): HTMLElement => {
  * @returns 要素が画面内に表示されている場合はtrue、それ以外はfalse
  */
 export const isInView = (checkWindow: Window, element: Element): boolean => {
-    const rect = element.getBoundingClientRect();
+  const rect = element.getBoundingClientRect();
 
-    const topIsInView = rect.top < checkWindow.innerHeight;
-    const bottomIsInView = 0 < rect.bottom;
-    const leftIsInView = rect.left < checkWindow.innerWidth;
-    const rightIsInView = 0 < rect.right;
+  const topIsInView = rect.top < checkWindow.innerHeight;
+  const bottomIsInView = 0 < rect.bottom;
+  const leftIsInView = rect.left < checkWindow.innerWidth;
+  const rightIsInView = 0 < rect.right;
 
-    const isInView =
-        topIsInView && bottomIsInView && leftIsInView && rightIsInView;
+  const isInView = topIsInView && bottomIsInView && leftIsInView && rightIsInView;
 
-    return isInView;
+  return isInView;
 };
 
 /**
@@ -137,16 +125,16 @@ export const isInView = (checkWindow: Window, element: Element): boolean => {
  * @returns 親要素の中で一番前面にある子要素のZインデックス
  */
 export const maxZIndex = (parentElement: HTMLElement): number => {
-    const zIndexes = Array.from(parentElement.children).map((child) => {
-        const elementZIndex = (child as HTMLElement)?.style?.zIndex;
-        const parsedZIndex = parseInt(elementZIndex);
-        const resultZIndex = !isNaN(parsedZIndex) ? parsedZIndex : 0;
+  const zIndexes = Array.from(parentElement.children).map((child) => {
+    const elementZIndex = (child as HTMLElement)?.style?.zIndex;
+    const parsedZIndex = parseInt(elementZIndex);
+    const resultZIndex = !isNaN(parsedZIndex) ? parsedZIndex : 0;
 
-        return resultZIndex;
-    });
+    return resultZIndex;
+  });
 
-    const resultMaxZIndex = Math.max(...zIndexes);
-    return resultMaxZIndex;
+  const resultMaxZIndex = Math.max(...zIndexes);
+  return resultMaxZIndex;
 };
 
 /**
@@ -155,17 +143,16 @@ export const maxZIndex = (parentElement: HTMLElement): number => {
  * @returns 子要素の高さの合計(offsetHeightの合計値)
  */
 export const totalHeight = (parentElement: HTMLElement): number => {
-    const resultTotalHeight = Array.from(parentElement.children).reduce(
-        (sum, childElement) => {
-            const elementOffsetHeight = (childElement as HTMLElement)
-                .offsetHeight;
-            const calcedHeight = sum + elementOffsetHeight;
-            return calcedHeight;
-        },
-        0,
-    );
+  const resultTotalHeight = Array.from(parentElement.children).reduce(
+    (sum, childElement) => {
+      const elementOffsetHeight = (childElement as HTMLElement).offsetHeight;
+      const calcedHeight = sum + elementOffsetHeight;
+      return calcedHeight;
+    },
+    0,
+  );
 
-    return resultTotalHeight;
+  return resultTotalHeight;
 };
 
 /** テストでグローバルオブジェクトのモックが必要になったときに差し替えるラップ関数 */

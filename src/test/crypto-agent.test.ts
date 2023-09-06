@@ -5,47 +5,46 @@ import { MessageData } from "../message-validator";
 import { SessionStaticKey } from "../session-static-value";
 
 import {
-    initChromeSession,
-    initMockCrypto,
-    initMockFetch,
-    mockMessageData,
+  initChromeSession,
+  initMockCrypto,
+  initMockFetch,
+  mockMessageData,
 } from "./mocks/mock-utils";
 
 describe("CryptoAgentクラス", () => {
-    let cryptoAgent: CryptoAgent<MessageData>;
+  let cryptoAgent: CryptoAgent<MessageData>;
 
-    beforeEach(async () => {
-        initMockCrypto();
-        initChromeSession();
-        initMockFetch();
+  beforeEach(async () => {
+    initMockCrypto();
+    initChromeSession();
+    initMockFetch();
 
-        container.clearInstances();
+    container.clearInstances();
 
-        container.register("SessionStaticKey", {
-            useClass: SessionStaticKey,
-        });
-
-        container.register<CryptoAgent<MessageData>>("CryptoAgent", {
-            useClass: AESCryptoAgent<MessageData>,
-        });
-
-        cryptoAgent =
-            container.resolve<CryptoAgent<MessageData>>("CryptoAgent");
-        await cryptoAgent.getProvider().generateValue(true);
-
-        // getterをカバレージのためにテストする(Uncovered Lineを残すべきではない)
-        cryptoAgent.getProvider();
+    container.register("SessionStaticKey", {
+      useClass: SessionStaticKey,
     });
 
-    it("メッセージデータを暗号化し、再度複合化する。", () => {
-        const encryptedData = cryptoAgent.encrypt(mockMessageData);
-
-        // 暗号化した結果が元のデータと等しくない
-        expect(encryptedData).not.toEqual(mockMessageData);
-
-        const decryptedData = cryptoAgent.decrypt(encryptedData);
-
-        // 復号化した結果が元のデータと等しい
-        expect(decryptedData).toEqual(mockMessageData);
+    container.register<CryptoAgent<MessageData>>("CryptoAgent", {
+      useClass: AESCryptoAgent<MessageData>,
     });
+
+    cryptoAgent = container.resolve<CryptoAgent<MessageData>>("CryptoAgent");
+    await cryptoAgent.getProvider().generateValue(true);
+
+    // getterをカバレージのためにテストする(Uncovered Lineを残すべきではない)
+    cryptoAgent.getProvider();
+  });
+
+  it("メッセージデータを暗号化し、再度複合化する。", () => {
+    const encryptedData = cryptoAgent.encrypt(mockMessageData);
+
+    // 暗号化した結果が元のデータと等しくない
+    expect(encryptedData).not.toEqual(mockMessageData);
+
+    const decryptedData = cryptoAgent.decrypt(encryptedData);
+
+    // 復号化した結果が元のデータと等しい
+    expect(decryptedData).toEqual(mockMessageData);
+  });
 });

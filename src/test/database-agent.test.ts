@@ -3,198 +3,198 @@ import "fake-indexeddb/auto";
 import { container } from "tsyringe";
 
 import {
-    DatabaseAgent,
-    DatabaseAgentConfig,
-    IndexdDBDatabaseAgent,
+  DatabaseAgent,
+  DatabaseAgentConfig,
+  IndexdDBDatabaseAgent,
 } from "../database-agent";
 import { ConsoleInjectableLogger } from "../logger";
 
 describe("DatabaseAgentクラス", () => {
-    const dbName = "testDB";
-    const storeName = "testStore";
-    const key = "testKey";
-    const data = "testData";
+  const dbName = "testDB";
+  const storeName = "testStore";
+  const key = "testKey";
+  const data = "testData";
 
-    let db: DatabaseAgent;
-    beforeEach(async () => {
-        container.clearInstances();
+  let db: DatabaseAgent;
+  beforeEach(async () => {
+    container.clearInstances();
 
-        container.register("Logger", {
-            useClass: ConsoleInjectableLogger,
-        });
-
-        container.register<DatabaseAgentConfig>("DatabaseAgentConfig", {
-            useValue: { databaseName: dbName, storeName: storeName },
-        });
-
-        container.register<DatabaseAgent>("DatabaseAgent", {
-            useClass: IndexdDBDatabaseAgent,
-        });
-
-        db = container.resolve<DatabaseAgent>("DatabaseAgent");
+    container.register("Logger", {
+      useClass: ConsoleInjectableLogger,
     });
 
-    it("データベースが正常に開けるか", async () => {
-        await expect(db.open()).resolves.not.toThrow();
+    container.register<DatabaseAgentConfig>("DatabaseAgentConfig", {
+      useValue: { databaseName: dbName, storeName: storeName },
     });
 
-    it("データを保存し、再取得する", async () => {
-        await db.open();
-
-        await expect(db.save({ key: key, data: data })).resolves.not.toThrow();
-        const retrievedData = await db.get(key);
-        expect(retrievedData).toBe(data);
+    container.register<DatabaseAgent>("DatabaseAgent", {
+      useClass: IndexdDBDatabaseAgent,
     });
 
-    it("データを保存し、削除する", async () => {
-        await db.open();
+    db = container.resolve<DatabaseAgent>("DatabaseAgent");
+  });
 
-        await db.save({ key: key, data: data });
-        await db.delete(key);
-        const retrievedData = await db.get(key);
-        expect(retrievedData).toBeUndefined();
+  it("データベースが正常に開けるか", async () => {
+    await expect(db.open()).resolves.not.toThrow();
+  });
+
+  it("データを保存し、再取得する", async () => {
+    await db.open();
+
+    await expect(db.save({ key: key, data: data })).resolves.not.toThrow();
+    const retrievedData = await db.get(key);
+    expect(retrievedData).toBe(data);
+  });
+
+  it("データを保存し、削除する", async () => {
+    await db.open();
+
+    await db.save({ key: key, data: data });
+    await db.delete(key);
+    const retrievedData = await db.get(key);
+    expect(retrievedData).toBeUndefined();
+  });
+
+  it("open エラー発生時にrejectするか", async () => {
+    const mockOpen = jest.fn();
+    const mockCreateObjectStore = jest.fn();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global as any).indexedDB = {
+      open: mockOpen,
+    };
+
+    const mockResult = {
+      createObjectStore: mockCreateObjectStore,
+    };
+
+    const mockRequest = {
+      onerror: () => {},
+      onsuccess: () => {},
+      onupgradeneeded: () => {},
+      result: mockResult,
+    };
+    mockOpen.mockReturnValue(mockRequest);
+
+    process.nextTick(() => mockRequest.onerror());
+    await expect(db.open()).rejects.toThrow();
+  });
+
+  it("save エラー発生時にrejectするか", async () => {
+    const mockTransaction = jest.fn();
+    const mockObjectStore = jest.fn();
+    const mockPut = jest.fn();
+
+    // IDBDatabase インスタンスのモック
+    const mockDBInstance = {
+      transaction: mockTransaction,
+    };
+
+    mockTransaction.mockReturnValue({
+      objectStore: mockObjectStore,
     });
 
-    it("open エラー発生時にrejectするか", async () => {
-        const mockOpen = jest.fn();
-        const mockCreateObjectStore = jest.fn();
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (global as any).indexedDB = {
-            open: mockOpen,
-        };
-
-        const mockResult = {
-            createObjectStore: mockCreateObjectStore,
-        };
-
-        const mockRequest = {
-            onerror: () => {},
-            onsuccess: () => {},
-            onupgradeneeded: () => {},
-            result: mockResult,
-        };
-        mockOpen.mockReturnValue(mockRequest);
-
-        process.nextTick(() => mockRequest.onerror());
-        await expect(db.open()).rejects.toThrow();
+    mockObjectStore.mockReturnValue({
+      put: mockPut,
     });
 
-    it("save エラー発生時にrejectするか", async () => {
-        const mockTransaction = jest.fn();
-        const mockObjectStore = jest.fn();
-        const mockPut = jest.fn();
+    // モックリクエスト
+    const mockRequest = {
+      onerror: () => {},
+      onsuccess: () => {},
+    };
 
-        // IDBDatabase インスタンスのモック
-        const mockDBInstance = {
-            transaction: mockTransaction,
-        };
+    mockPut.mockReturnValue(mockRequest);
 
-        mockTransaction.mockReturnValue({
-            objectStore: mockObjectStore,
-        });
+    // dbプロパティをモックしたIDBDatabaseインスタンスに置き換え
+    const oldDb = db["db"];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any).db = mockDBInstance;
 
-        mockObjectStore.mockReturnValue({
-            put: mockPut,
-        });
+    // エラーハンドラをトリガ
+    process.nextTick(() => mockRequest.onerror?.());
+    await expect(db.save({ key, data })).rejects.toThrow();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any).db = oldDb;
+  });
 
-        // モックリクエスト
-        const mockRequest = {
-            onerror: () => {},
-            onsuccess: () => {},
-        };
+  it("get エラー発生時にrejectするか", async () => {
+    const mockTransaction = jest.fn();
+    const mockObjectStore = jest.fn();
+    const mockGet = jest.fn();
 
-        mockPut.mockReturnValue(mockRequest);
+    // IDBDatabase インスタンスのモック
+    const mockDBInstance = {
+      transaction: mockTransaction,
+    };
 
-        // dbプロパティをモックしたIDBDatabaseインスタンスに置き換え
-        const oldDb = db["db"];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (db as any).db = mockDBInstance;
-
-        // エラーハンドラをトリガ
-        process.nextTick(() => mockRequest.onerror?.());
-        await expect(db.save({ key, data })).rejects.toThrow();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (db as any).db = oldDb;
+    mockTransaction.mockReturnValue({
+      objectStore: mockObjectStore,
     });
 
-    it("get エラー発生時にrejectするか", async () => {
-        const mockTransaction = jest.fn();
-        const mockObjectStore = jest.fn();
-        const mockGet = jest.fn();
-
-        // IDBDatabase インスタンスのモック
-        const mockDBInstance = {
-            transaction: mockTransaction,
-        };
-
-        mockTransaction.mockReturnValue({
-            objectStore: mockObjectStore,
-        });
-
-        mockObjectStore.mockReturnValue({
-            get: mockGet,
-        });
-
-        // モックリクエスト
-        const mockRequest = {
-            onerror: () => {},
-            onsuccess: () => {},
-        };
-
-        mockGet.mockReturnValue(mockRequest);
-
-        // dbプロパティをモックしたIDBDatabaseインスタンスに置き換え
-        const oldDb = db["db"];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (db as any).db = mockDBInstance;
-
-        // エラーハンドラをトリガ
-        process.nextTick(() => mockRequest.onerror?.());
-        await expect(db.get(key)).rejects.toThrow();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (db as any).db = oldDb;
+    mockObjectStore.mockReturnValue({
+      get: mockGet,
     });
 
-    it("delete エラー発生時にrejectするか", async () => {
-        const mockTransaction = jest.fn();
-        const mockObjectStore = jest.fn();
-        const mockDelete = jest.fn();
+    // モックリクエスト
+    const mockRequest = {
+      onerror: () => {},
+      onsuccess: () => {},
+    };
 
-        // IDBDatabase インスタンスのモック
-        const mockDBInstance = {
-            transaction: mockTransaction,
-        };
+    mockGet.mockReturnValue(mockRequest);
 
-        mockTransaction.mockReturnValue({
-            objectStore: mockObjectStore,
-        });
+    // dbプロパティをモックしたIDBDatabaseインスタンスに置き換え
+    const oldDb = db["db"];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any).db = mockDBInstance;
 
-        mockObjectStore.mockReturnValue({
-            delete: mockDelete,
-        });
+    // エラーハンドラをトリガ
+    process.nextTick(() => mockRequest.onerror?.());
+    await expect(db.get(key)).rejects.toThrow();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any).db = oldDb;
+  });
 
-        // モックリクエスト
-        const mockRequest = {
-            onerror: () => {},
-            onsuccess: () => {},
-        };
+  it("delete エラー発生時にrejectするか", async () => {
+    const mockTransaction = jest.fn();
+    const mockObjectStore = jest.fn();
+    const mockDelete = jest.fn();
 
-        mockDelete.mockReturnValue(mockRequest);
+    // IDBDatabase インスタンスのモック
+    const mockDBInstance = {
+      transaction: mockTransaction,
+    };
 
-        // dbプロパティをモックしたIDBDatabaseインスタンスに置き換え
-        const oldDb = db["db"];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (db as any).db = mockDBInstance;
-
-        // エラーハンドラをトリガ
-        process.nextTick(() => mockRequest.onerror?.());
-        await expect(db.delete(key)).rejects.toThrow();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (db as any).db = oldDb;
+    mockTransaction.mockReturnValue({
+      objectStore: mockObjectStore,
     });
 
-    afterEach(() => {
-        db.close();
+    mockObjectStore.mockReturnValue({
+      delete: mockDelete,
     });
+
+    // モックリクエスト
+    const mockRequest = {
+      onerror: () => {},
+      onsuccess: () => {},
+    };
+
+    mockDelete.mockReturnValue(mockRequest);
+
+    // dbプロパティをモックしたIDBDatabaseインスタンスに置き換え
+    const oldDb = db["db"];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any).db = mockDBInstance;
+
+    // エラーハンドラをトリガ
+    process.nextTick(() => mockRequest.onerror?.());
+    await expect(db.delete(key)).rejects.toThrow();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any).db = oldDb;
+  });
+
+  afterEach(() => {
+    db.close();
+  });
 });

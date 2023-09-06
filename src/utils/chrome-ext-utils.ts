@@ -14,29 +14,29 @@ export const EXT_ORIGIN = "chrome-extension://" + chrome.runtime.id;
  * @returns セッション保存時に解決されるプロミス
  */
 export const generateSessionStaticValue = async (
-    key: string,
-    value: string,
-    regenerate: boolean,
+  key: string,
+  value: string,
+  regenerate: boolean,
 ): Promise<string> => {
-    if (isBackground()) {
-        await chrome.storage.session.setAccessLevel({
-            accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
-        });
-    }
-
-    if (!regenerate) {
-        const prevObect = await chrome.storage.session.get([key]);
-        const prevValue = prevObect[key];
-        if (prevValue) {
-            return prevValue;
-        }
-    }
-
-    await chrome.storage.session.set({
-        [key]: value,
+  if (isBackground()) {
+    await chrome.storage.session.setAccessLevel({
+      accessLevel: "TRUSTED_AND_UNTRUSTED_CONTEXTS",
     });
+  }
 
-    return value;
+  if (!regenerate) {
+    const prevObect = await chrome.storage.session.get([key]);
+    const prevValue = prevObect[key];
+    if (prevValue) {
+      return prevValue;
+    }
+  }
+
+  await chrome.storage.session.set({
+    [key]: value,
+  });
+
+  return value;
 };
 
 /**
@@ -44,15 +44,15 @@ export const generateSessionStaticValue = async (
  * @returns バッググラウンドスクリプトの場合は true、そうでない場合は false
  */
 export const isBackground = (): boolean => {
-    if (getLocation().origin === EXT_ORIGIN) {
-        // 正確な判定方法がわからないため例外を発生させます
-        try {
-            return typeof getDocument() === "undefined";
-        } catch (error) {
-            return true;
-        }
+  if (getLocation().origin === EXT_ORIGIN) {
+    // 正確な判定方法がわからないため例外を発生させます
+    try {
+      return typeof getDocument() === "undefined";
+    } catch (error) {
+      return true;
     }
-    return false;
+  }
+  return false;
 };
 
 /**
@@ -61,10 +61,10 @@ export const isBackground = (): boolean => {
  * @returns テキストデータの読み込み完了時に解決されるプロミス
  */
 export const loadResourceText = async (path: string): Promise<string> => {
-    const fileURL = chrome.runtime.getURL(path);
-    const result = await fetch(fileURL);
-    const text = await result.text();
-    return text;
+  const fileURL = chrome.runtime.getURL(path);
+  const result = await fetch(fileURL);
+  const text = await result.text();
+  return text;
 };
 
 /**
@@ -75,14 +75,14 @@ export const loadResourceText = async (path: string): Promise<string> => {
  * @param action DOM が準備できたときに実行されるアクション
  */
 export const reserveLoadedAction = (doc: Document, action: { (): void }) => {
-    if (doc.readyState === "interactive" || doc.readyState === "complete") {
-        action();
-        return;
-    }
+  if (doc.readyState === "interactive" || doc.readyState === "complete") {
+    action();
+    return;
+  }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        action();
-    });
+  document.addEventListener("DOMContentLoaded", () => {
+    action();
+  });
 };
 
 /**
@@ -95,18 +95,18 @@ export const reserveLoadedAction = (doc: Document, action: { (): void }) => {
  * @returns 実行後に解決されるプロミス
  */
 export const waitForAction = async (
-    action: { (): void },
-    check: { (): boolean },
-    timeout: number = 30,
-    maxCheck: number = 6000,
+  action: { (): void },
+  check: { (): boolean },
+  timeout: number = 30,
+  maxCheck: number = 6000,
 ): Promise<void> => {
-    let checkedCount = 0;
-    while (checkedCount < maxCheck) {
-        if (check() === true) {
-            break;
-        }
-        await new Promise((resolve) => setTimeout(resolve, timeout));
-        checkedCount++;
+  let checkedCount = 0;
+  while (checkedCount < maxCheck) {
+    if (check() === true) {
+      break;
     }
-    action();
+    await new Promise((resolve) => setTimeout(resolve, timeout));
+    checkedCount++;
+  }
+  action();
 };
