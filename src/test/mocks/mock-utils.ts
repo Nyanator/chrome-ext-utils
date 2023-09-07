@@ -86,11 +86,13 @@ export const initMockCrypto = async () => {
   const nodeCrypto = await import("crypto");
 
   // windowのcryptoオブジェクトにrandomUUIDをモックする
-  Object.defineProperty(window, "crypto", {
-    value: {
-      randomUUID: jest.fn().mockImplementation(() => nodeCrypto.randomUUID()),
-    },
-  });
+  if (!window.crypto) {
+    Object.defineProperty(window, "crypto", {
+      value: {
+        randomUUID: jest.fn().mockImplementation(() => nodeCrypto.randomUUID()),
+      },
+    });
+  }
 };
 
 export const initMockFetch = () => {

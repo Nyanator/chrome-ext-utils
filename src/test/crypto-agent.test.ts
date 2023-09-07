@@ -53,6 +53,8 @@ describe("CryptoAgentクラス", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     jest.spyOn(typiaValidators, "isMessageDataStringfy").mockReturnValueOnce(null);
 
-    expect(() => cryptoAgent.encrypt(mockMessageData)).toThrow();
+    expect(() => {
+      cryptoAgent.encrypt(mockMessageData);
+    }).toThrow();
   });
 });
