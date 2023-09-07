@@ -7,7 +7,9 @@ import "reflect-metadata";
 import { injectable } from "tsyringe";
 
 import { Logger } from "./logger";
+import { MessageData } from "./message-validator";
 import { SessionStaticValue } from "./session-static-value";
+import { isMessageDataParse, isMessageDataStringfy } from "./typia/generated/validators";
 import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";
 
@@ -32,7 +34,7 @@ export interface CryptoAgent<T> {
 }
 
 @injectable()
-export class AESCryptoAgent<T> implements CryptoAgent<T> {
+export class AESCryptoAgent implements CryptoAgent<MessageData> {
   constructor(
     @injectOptional("Logger") private readonly logger: Logger,
     @injectOptional("SessionStaticKey")
@@ -43,19 +45,22 @@ export class AESCryptoAgent<T> implements CryptoAgent<T> {
     return assertNotNull(this.keyProvider);
   }
 
-  encrypt(messageData: T): string {
-    const json = JSON.stringify(messageData);
+  encrypt(messageData: MessageData): string {
+    const json = isMessageDataStringfy(messageData);
+    if (!json) {
+      throw new TypeError("uncorected json object");
+    }
     const key = assertNotNull(this.keyProvider).getValue();
     const ecrypted = CryptoJS.AES.encrypt(json, key);
     const encryptedString = ecrypted.toString();
     return encryptedString;
   }
 
-  decrypt(encryptedMessageData: string): T {
+  decrypt(encryptedMessageData: string): MessageData {
     const key = assertNotNull(this.keyProvider).getValue();
     const decryptedMessageData = CryptoJS.AES.decrypt(encryptedMessageData, key);
     const decryptedMessageDataString = decryptedMessageData.toString(CryptoJS.enc.Utf8);
-    const decryptedMessageJson = JSON.parse(decryptedMessageDataString);
+    const decryptedMessageJson = isMessageDataParse(decryptedMessageDataString);
     return decryptedMessageJson;
   }
 }

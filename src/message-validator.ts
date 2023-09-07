@@ -7,10 +7,11 @@ import { inject, injectable } from "tsyringe";
 import { CryptoAgent } from "./crypto-agent";
 import { Logger } from "./logger";
 import { SessionStaticValue } from "./session-static-value";
+import { equalsTypedRealMessage, isMessageDataParse } from "./typia/generated/validators";
 import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";
 
-export interface MessageValidator<T extends MessageData> {
+export interface MessageValidator {
   /** 検証設定オブジェクトを返します。 */
   getConfig(): MessageValidatorConfig;
 
@@ -18,20 +19,20 @@ export interface MessageValidator<T extends MessageData> {
   getProvider(): SessionStaticValue;
 
   /** 暗号化に使うCrypotAgentオブジェクトを返します。 */
-  getCryptoAgent(): CryptoAgent<T> | undefined;
+  getCryptoAgent(): CryptoAgent<MessageData> | undefined;
 
   /** メッセージが正当か検証します。*/
-  isValid(validationTarget: SendObject): T | undefined;
+  isValid(validationParam: ValidationParam): MessageData | undefined;
 }
 
 /** メッセージオブジェクト(暗号化される部分) */
-export interface MessageData {
+export type MessageData = {
   /** 拡張機能のID */
   readonly runtimeId: string;
 
   /** メッセージ本文 */
   readonly message: string;
-}
+};
 
 /** メッセージの正当性検証設定 */
 export type MessageValidatorConfig = Readonly<{
@@ -42,8 +43,8 @@ export type MessageValidatorConfig = Readonly<{
   allowedOrigins: string[];
 }>;
 
-/** APIで実際に送信されるオブジェクト */
-export type SendObject = Readonly<{
+/** Validationパラメータ */
+export type ValidationParam = Readonly<{
   /** オリジン */
   origin: string;
 
@@ -54,8 +55,15 @@ export type SendObject = Readonly<{
   message: unknown;
 }>;
 
+/** APIで実際に送信されるオブジェクト */
+export type TypedRealMessage = {
+  token: string;
+  channel?: string;
+  messageData: string;
+};
+
 @injectable()
-export class MessageValidatorImpl<T extends MessageData> implements MessageValidator<T> {
+export class MessageValidatorImpl implements MessageValidator {
   constructor(
     @inject("MessageValidatorConfig")
     private readonly config: MessageValidatorConfig,
@@ -63,7 +71,7 @@ export class MessageValidatorImpl<T extends MessageData> implements MessageValid
     private readonly tokenProvider: SessionStaticValue,
     @inject("Logger") private readonly logger: Logger,
     @injectOptional("CryptoAgent")
-    private readonly cryptoAgent?: CryptoAgent<T>,
+    private readonly cryptoAgent?: CryptoAgent<MessageData>,
   ) {}
 
   getConfig() {
@@ -78,45 +86,33 @@ export class MessageValidatorImpl<T extends MessageData> implements MessageValid
     return this.cryptoAgent;
   }
 
-  isValid(validationTarget: SendObject): T | undefined {
+  isValid(validationParam: ValidationParam): MessageData | undefined {
     // オリジンの検証
-    if (!this.config.allowedOrigins.includes(validationTarget.origin)) {
+    if (!this.config.allowedOrigins.includes(validationParam.origin)) {
       return;
     }
-
-    if (typeof validationTarget.message !== "object" || !validationTarget.message) {
-      return;
-    }
-
-    // メッセージの型を明示的に定義
-    type TypedMessage = {
-      token?: string;
-      channel?: string;
-      messageData?: string;
-    };
 
     // 型検証
-    const typedMessage: TypedMessage = validationTarget.message;
-    const invalidToken = assertNotNull(this.tokenProvider).getValue();
+    if (!equalsTypedRealMessage(validationParam.message)) {
+      return;
+    }
 
-    if (
-      !typedMessage.token ||
-      typedMessage.token !== invalidToken ||
-      typeof typedMessage.messageData !== "string"
-    ) {
+    // トークンの検証
+    const validToken = this.tokenProvider.getValue();
+    if (validationParam.message.token !== validToken) {
       return;
     }
 
     // チャンネルが一致しない場合無視(グローバルチャンネル以外)
-    const isGlobalChannel = validationTarget.channel;
-    if (!isGlobalChannel && validationTarget.channel !== typedMessage.channel) {
+    const isGlobalChannel = validationParam.channel;
+    if (!isGlobalChannel && validationParam.channel !== validationParam.message.channel) {
       return;
     }
 
     // 複合化して
     const decryptedMessageData =
-      this.cryptoAgent?.decrypt(typedMessage.messageData) ??
-      JSON.parse(typedMessage.messageData);
+      this.cryptoAgent?.decrypt(validationParam.message.messageData) ??
+      isMessageDataParse(validationParam.message.messageData);
 
     // 必須項目を検証
     if (decryptedMessageData.runtimeId !== this.config.runtimeId) {

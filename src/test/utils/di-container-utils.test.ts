@@ -12,7 +12,6 @@ import {
   ErrorObserver,
   IndexdDBDatabaseAgent,
   Logger,
-  MessageData,
   MessageValidator,
   MessageValidatorConfig,
   MessageValidatorImpl,
@@ -54,7 +53,7 @@ describe("initializeDIContainer関数の結合テスト", () => {
   });
 
   it("DIコンテナにCryptoAgentが正しく登録されていることを確認する", () => {
-    const instance = container.resolve<AESCryptoAgent<MessageData>>("CryptoAgent");
+    const instance = container.resolve<AESCryptoAgent>("CryptoAgent");
     expect(instance).toBeInstanceOf(AESCryptoAgent);
   });
 
@@ -93,10 +92,10 @@ describe("initializeDIContainer関数の結合テスト", () => {
   });
 
   it("DIコンテナにMessageValidatorManagerがシングルトンとして正しく登録されていることを確認する", () => {
-    const instance1 = container.resolve<MessageValidatorManager<MessageData>>(
+    const instance1 = container.resolve<MessageValidatorManager>(
       "MessageValidatorManager",
     );
-    const instance2 = container.resolve<MessageValidatorManager<MessageData>>(
+    const instance2 = container.resolve<MessageValidatorManager>(
       "MessageValidatorManager",
     );
     expect(instance1).toBeInstanceOf(MessageValidatorManagerImpl);
@@ -105,13 +104,12 @@ describe("initializeDIContainer関数の結合テスト", () => {
   });
 
   it("DIコンテナにMessageValidatorが正しく登録されていることを確認する", () => {
-    const instance = container.resolve<MessageValidator<MessageData>>("MessageValidator");
+    const instance = container.resolve<MessageValidator>("MessageValidator");
     expect(instance).toBeInstanceOf(MessageValidatorImpl);
   });
 
   it("DIコンテナにRuntimeMessageAgentが正しく登録されていることを確認する", () => {
-    const instance =
-      container.resolve<RuntimeMessageAgentImpl<MessageData>>("RuntimeMessageAgent");
+    const instance = container.resolve<RuntimeMessageAgentImpl>("RuntimeMessageAgent");
     expect(instance).toBeInstanceOf(RuntimeMessageAgentImpl);
   });
 
@@ -126,8 +124,7 @@ describe("initializeDIContainer関数の結合テスト", () => {
   });
 
   it("DIコンテナにWindowMessageAgentが正しく登録されていることを確認する", () => {
-    const instance =
-      container.resolve<WindowMessageAgentImpl<MessageData>>("WindowMessageAgent");
+    const instance = container.resolve<WindowMessageAgentImpl>("WindowMessageAgent");
     expect(instance).toBeInstanceOf(WindowMessageAgentImpl);
   });
 });

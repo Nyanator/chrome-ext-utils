@@ -17,8 +17,8 @@ import * as MockUtils from "./mocks/mock-utils";
 describe.each([false, true])(
   "MessageAgentクラス 疎通テスト (暗号化: %s)",
   (isEncryptionEnabled) => {
-    let runtimeMessageAgent: RuntimeMessageAgent<MessageValidator.MessageData>;
-    let windowMssageAgent: WindowMessageAgent<MessageValidator.MessageData>;
+    let runtimeMessageAgent: RuntimeMessageAgent;
+    let windowMssageAgent: WindowMessageAgent;
 
     MockUtils.mockAllSessionValues();
 
@@ -43,7 +43,7 @@ describe.each([false, true])(
 
       if (isEncryptionEnabled) {
         container.register<CryptoAgent<MessageValidator.MessageData>>("CryptoAgent", {
-          useClass: AESCryptoAgent<MessageValidator.MessageData>,
+          useClass: AESCryptoAgent,
         });
       } else {
         container.register("CryptoAgent", {
@@ -51,10 +51,8 @@ describe.each([false, true])(
         });
       }
 
-      container.register<
-        MessageValidator.MessageValidatorImpl<MessageValidator.MessageData>
-      >("MessageValidator", {
-        useClass: MessageValidator.MessageValidatorImpl<MessageValidator.MessageData>,
+      container.register<MessageValidator.MessageValidatorImpl>("MessageValidator", {
+        useClass: MessageValidator.MessageValidatorImpl,
       });
 
       container.register<MessageValidatorManagerConfig>("MessageValidatorManagerConfig", {
@@ -64,34 +62,22 @@ describe.each([false, true])(
         },
       });
 
-      container.register<RuntimeMessageAgent<MessageValidator.MessageData>>(
-        "RuntimeMessageAgent",
-        {
-          useClass: RuntimeMessageAgentImpl,
-        },
-      );
+      container.register<RuntimeMessageAgent>("RuntimeMessageAgent", {
+        useClass: RuntimeMessageAgentImpl,
+      });
 
-      container.register<WindowMessageAgent<MessageValidator.MessageData>>(
-        "WindowMessageAgent",
-        {
-          useClass: WindowMessageAgentImpl,
-        },
-      );
+      container.register<WindowMessageAgent>("WindowMessageAgent", {
+        useClass: WindowMessageAgentImpl,
+      });
 
-      container.registerSingleton<MessageValidatorManager<MessageValidator.MessageData>>(
+      container.registerSingleton<MessageValidatorManager>(
         "MessageValidatorManager",
-        MessageValidatorManagerImpl<MessageValidator.MessageData>,
+        MessageValidatorManagerImpl,
       );
 
-      runtimeMessageAgent =
-        container.resolve<RuntimeMessageAgent<MessageValidator.MessageData>>(
-          "RuntimeMessageAgent",
-        );
+      runtimeMessageAgent = container.resolve<RuntimeMessageAgent>("RuntimeMessageAgent");
 
-      windowMssageAgent =
-        container.resolve<WindowMessageAgent<MessageValidator.MessageData>>(
-          "WindowMessageAgent",
-        );
+      windowMssageAgent = container.resolve<WindowMessageAgent>("WindowMessageAgent");
     });
 
     it("iframeから親ウィンドウへwindowメッセージを送受信できるか", async () => {

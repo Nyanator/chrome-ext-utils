@@ -10,7 +10,7 @@ import { MessageValidatorManager } from "./message-validatior-manager";
 import { MessageData, MessageValidatorConfig } from "./message-validator";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ウィンドウ) */
-export interface WindowMessageAgent<T extends MessageData> {
+export interface WindowMessageAgent {
   /**
    * 暗号化されたメッセージを windowに送信します。
    * @param target 送信先の window
@@ -22,7 +22,7 @@ export interface WindowMessageAgent<T extends MessageData> {
     target: Window;
     targetOrigin: string;
     channel?: string;
-    message: T;
+    message: MessageData;
   }): Promise<void>;
 
   /**
@@ -30,27 +30,25 @@ export interface WindowMessageAgent<T extends MessageData> {
    * @param channel 受信チャンネル
    * @param listener メッセージ受信時に呼び出されるリスナー関数
    */
-  addListener(arg: { channel?: string; listener: (event: T) => void }): void;
+  addListener(arg: { channel?: string; listener: (event: MessageData) => void }): void;
 
   /** 指定したリスナーを解除します。*/
-  removeListener(listener: (event: T) => void): void;
+  removeListener(listener: (event: MessageData) => void): void;
 
   /** リスナーをすべて解除します。*/
   clearListeners(): void;
 }
 
 @injectable()
-export class WindowMessageAgentImpl<T extends MessageData>
-  implements WindowMessageAgent<T>
-{
+export class WindowMessageAgentImpl implements WindowMessageAgent {
   private readonly windowListeners: Map<
-    (event: T) => void,
+    (event: MessageData) => void,
     (event: MessageEvent) => void
   > = new Map();
 
   constructor(
     @inject("MessageValidatorManager")
-    private readonly validatorManager: MessageValidatorManager<T>,
+    private readonly validatorManager: MessageValidatorManager,
     @inject("MessageValidatorConfig")
     private readonly validatorConfig: MessageValidatorConfig,
     @inject("Logger") private readonly logger: Logger,
@@ -60,7 +58,7 @@ export class WindowMessageAgentImpl<T extends MessageData>
     target: Window;
     channel?: string;
     targetOrigin: string;
-    message: T;
+    message: MessageData;
   }): Promise<void> {
     if (!this.validatorConfig.allowedOrigins.includes(arg.targetOrigin)) {
       throw new Error(`Invalid targetOrigin: ${arg.targetOrigin}`);
@@ -81,7 +79,7 @@ export class WindowMessageAgentImpl<T extends MessageData>
     );
   }
 
-  addListener(arg: { channel?: string; listener: (event: T) => void }): void {
+  addListener(arg: { channel?: string; listener: (event: MessageData) => void }): void {
     const newListener = async (event: MessageEvent) => {
       const messageData = await this.validatorManager.processValidation({
         origin: event.origin,
@@ -99,7 +97,7 @@ export class WindowMessageAgentImpl<T extends MessageData>
     window.addEventListener("message", newListener);
   }
 
-  removeListener(listener: (event: T) => void): void {
+  removeListener(listener: (event: MessageData) => void): void {
     const windowListener = this.windowListeners.get(listener);
     if (windowListener) {
       window.removeEventListener("message", windowListener);

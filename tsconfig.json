@@ -7,9 +7,11 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["ES2020", "dom"],
+    "lib": [
+      "ES2020",
+      "dom"
+    ],
     "module": "CommonJS",
-    "moduleResolution": "nodenext",
     "outDir": "./dist",
     "resolveJsonModule": true,
     "rootDir": "./src",
@@ -17,7 +19,18 @@
     "sourceMap": false,
     "strict": true,
     "target": "ES2020",
+    "strictNullChecks": true,
+    "plugins": [
+      {
+        "transform": "typia/lib/transform"
+      }
+    ]
   },
-  "exclude": ["./node_modules", "./dist"],
-  "include": ["./src/index.ts"]
+  "exclude": [
+    "./node_modules",
+    "./dist"
+  ],
+  "include": [
+    "./src/index.ts"
+  ]
 }

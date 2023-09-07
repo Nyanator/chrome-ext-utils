@@ -5,18 +5,18 @@ import "reflect-metadata";
 import { container, inject, injectable } from "tsyringe";
 
 import { Logger } from "./logger";
-import { MessageData, MessageValidator, SendObject } from "./message-validator";
+import { MessageData, MessageValidator, ValidationParam } from "./message-validator";
 import { isBackground } from "./utils/chrome-ext-utils";
 
-export interface MessageValidatorManager<T extends MessageData> {
+export interface MessageValidatorManager {
   /** メッセージが正当か検証します。*/
-  processValidation(validationTarget: SendObject): Promise<T | undefined>;
+  processValidation(validationParam: ValidationParam): Promise<MessageData | undefined>;
 
   /** 管理下のValidatorを更新します。*/
   refreshValidators(): Promise<void>;
 
   /** 最新のValidatorを返します。*/
-  getLatestValidator(): Promise<MessageValidator<T>>;
+  getLatestValidator(): Promise<MessageValidator>;
 }
 
 /** 構築設定 */
@@ -28,10 +28,8 @@ export type MessageValidatorManagerConfig = Readonly<{
 }>;
 
 @injectable()
-export class MessageValidatorManagerImpl<T extends MessageData>
-  implements MessageValidatorManager<T>
-{
-  private readonly managedValidators: MessageValidator<T>[] = [];
+export class MessageValidatorManagerImpl implements MessageValidatorManager {
+  private readonly managedValidators: MessageValidator[] = [];
 
   constructor(
     @inject("MessageValidatorManagerConfig")
@@ -55,12 +53,14 @@ export class MessageValidatorManagerImpl<T extends MessageData>
     }
   }
 
-  async processValidation(validationTarget: SendObject): Promise<T | undefined> {
+  async processValidation(
+    validationParam: ValidationParam,
+  ): Promise<MessageData | undefined> {
     // 非同期通信ではトークンの更新タイミングと送信が重なるとエラーとなってしまう
     // valiatorオブジェクトのリストを用意して確認することで通信の安定性を実現している
 
     // 管理下にあるValidatorで検証が通る場合はOK
-    const managedValidatorsResult = this.managedValidatorsValidation(validationTarget);
+    const managedValidatorsResult = this.managedValidatorsValidation(validationParam);
     if (managedValidatorsResult) {
       return managedValidatorsResult;
     }
@@ -70,7 +70,7 @@ export class MessageValidatorManagerImpl<T extends MessageData>
     this.pushValidator(newValidator);
 
     // 最終的な検証結果は新規作成したValidatorで決定する
-    const newValidatorResult = newValidator.isValid(validationTarget);
+    const newValidatorResult = newValidator.isValid(validationParam);
     return newValidatorResult;
   }
 
@@ -89,7 +89,7 @@ export class MessageValidatorManagerImpl<T extends MessageData>
     this.pushValidator(newValidator);
   }
 
-  async getLatestValidator(): Promise<MessageValidator<T>> {
+  async getLatestValidator(): Promise<MessageValidator> {
     if (this.managedValidators.length === 0) {
       const firstValidator = await this.createNewValidator();
       this.pushValidator(firstValidator);
@@ -97,25 +97,27 @@ export class MessageValidatorManagerImpl<T extends MessageData>
     return this.managedValidators.slice(-1)[0];
   }
 
-  private managedValidatorsValidation(validationTarget: SendObject): T | undefined {
+  private managedValidatorsValidation(
+    validationParam: ValidationParam,
+  ): MessageData | undefined {
     // Validatorリストを逆順にして、最新のValidatorから検証を試みます
     for (const validator of [...this.managedValidators].reverse()) {
-      const validationResult = validator.isValid(validationTarget);
+      const validationResult = validator.isValid(validationParam);
       if (validationResult) {
         return validationResult;
       }
     }
   }
 
-  private pushValidator(newValidator: MessageValidator<T>) {
+  private pushValidator(newValidator: MessageValidator) {
     this.managedValidators.push(newValidator);
     if (this.managedValidators.length > this.config.maxMessageValidators) {
       this.managedValidators.shift();
     }
   }
 
-  private async createNewValidator(): Promise<MessageValidator<T>> {
-    const newValidator = container.resolve<MessageValidator<T>>("MessageValidator");
+  private async createNewValidator(): Promise<MessageValidator> {
+    const newValidator = container.resolve<MessageValidator>("MessageValidator");
 
     const tokenProvider = newValidator.getProvider();
     const keyProvider = newValidator.getCryptoAgent()?.getProvider();

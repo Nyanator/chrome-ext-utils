@@ -12,7 +12,7 @@ import * as MockUtils from "./mocks/mock-utils";
 
 describe("MessageValidatorクラス", () => {
   let cryptoAgent: CryptoAgent<MessageData>;
-  let validator: MessageValidator<MessageData>;
+  let validator: MessageValidator;
   // 有効なメッセージのモック
   let mockValidMessage: unknown;
 
@@ -39,16 +39,16 @@ describe("MessageValidatorクラス", () => {
     });
 
     container.register<CryptoAgent<MessageData>>("CryptoAgent", {
-      useClass: AESCryptoAgent<MessageData>,
+      useClass: AESCryptoAgent,
     });
 
     cryptoAgent = container.resolve<CryptoAgent<MessageData>>("CryptoAgent");
 
-    container.register<MessageValidator<MessageData>>("MessageValidator", {
+    container.register<MessageValidator>("MessageValidator", {
       useClass: MessageValidatorImpl,
     });
 
-    validator = container.resolve<MessageValidator<MessageData>>("MessageValidator");
+    validator = container.resolve<MessageValidator>("MessageValidator");
     mockValidMessage = MockUtils.createMockValidMessage(cryptoAgent);
   });
 
@@ -140,8 +140,7 @@ describe("MessageValidatorクラス", () => {
     container.register("CryptoAgent", {
       useValue: undefined,
     });
-    const rawValidator =
-      container.resolve<MessageValidator<MessageData>>("MessageValidator");
+    const rawValidator = container.resolve<MessageValidator>("MessageValidator");
     expect(
       rawValidator.isValid({
         origin: MockUtils.mockValidatorConfig.allowedOrigins[0],

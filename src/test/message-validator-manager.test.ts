@@ -15,7 +15,7 @@ import * as MockUtils from "./mocks/mock-utils";
 
 describe("MessageValidatorManagerクラスのテスト", () => {
   let cryptoAgent: CryptoAgent<MessageValidator.MessageData>;
-  let messageValidatorManager: MessageValidatorManager<MessageValidator.MessageData>;
+  let messageValidatorManager: MessageValidatorManager;
 
   // 有効なメッセージのモック
   let mockValidMessage: unknown;
@@ -42,7 +42,7 @@ describe("MessageValidatorManagerクラスのテスト", () => {
     });
 
     container.register<CryptoAgent<MessageValidator.MessageData>>("CryptoAgent", {
-      useClass: AESCryptoAgent<MessageValidator.MessageData>,
+      useClass: AESCryptoAgent,
     });
 
     cryptoAgent =
@@ -66,16 +66,13 @@ describe("MessageValidatorManagerクラスのテスト", () => {
       },
     });
 
-    container.register<MessageValidatorManager<MessageValidator.MessageData>>(
-      "MessageValidatorManager",
-      {
-        useClass: MessageValidatorManagerImpl,
-      },
-    );
+    container.register<MessageValidatorManager>("MessageValidatorManager", {
+      useClass: MessageValidatorManagerImpl,
+    });
 
-    messageValidatorManager = container.resolve<
-      MessageValidatorManager<MessageValidator.MessageData>
-    >("MessageValidatorManager");
+    messageValidatorManager = container.resolve<MessageValidatorManager>(
+      "MessageValidatorManager",
+    );
   });
 
   it("validationProcess 有効なメッセージを検証すると結果を返す", async () => {
@@ -117,9 +114,9 @@ describe("MessageValidatorManagerクラスのテスト", () => {
 
   it("バックグラウンドでは、chrome.alarms.createを呼んでいる", async () => {
     jest.spyOn(ChromeExtensionUtils, "isBackground").mockReturnValueOnce(true);
-    messageValidatorManager = container.resolve<
-      MessageValidatorManager<MessageValidator.MessageData>
-    >("MessageValidatorManager");
+    messageValidatorManager = container.resolve<MessageValidatorManager>(
+      "MessageValidatorManager",
+    );
 
     expect(chrome.alarms.create).toHaveBeenLastCalledWith(expect.anything(), {
       periodInMinutes: 1,
@@ -139,9 +136,9 @@ describe("MessageValidatorManagerクラスのテスト", () => {
 
     const setIntervalSpy = jest.spyOn(global, "setInterval");
     jest.spyOn(ChromeExtensionUtils, "isBackground").mockReturnValueOnce(false);
-    messageValidatorManager = container.resolve<
-      MessageValidatorManager<MessageValidator.MessageData>
-    >("MessageValidatorManager");
+    messageValidatorManager = container.resolve<MessageValidatorManager>(
+      "MessageValidatorManager",
+    );
 
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.anything(), 1 * 60 * 1000);
 

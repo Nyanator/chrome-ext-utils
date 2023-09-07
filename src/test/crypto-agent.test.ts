@@ -3,6 +3,7 @@ import { container } from "tsyringe";
 import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
 import { MessageData } from "../message-validator";
 import { SessionStaticKey } from "../session-static-value";
+import * as typiaValidators from "../typia/generated/validators";
 
 import {
   initChromeSession,
@@ -26,7 +27,7 @@ describe("CryptoAgentクラス", () => {
     });
 
     container.register<CryptoAgent<MessageData>>("CryptoAgent", {
-      useClass: AESCryptoAgent<MessageData>,
+      useClass: AESCryptoAgent,
     });
 
     cryptoAgent = container.resolve<CryptoAgent<MessageData>>("CryptoAgent");
@@ -46,5 +47,12 @@ describe("CryptoAgentクラス", () => {
 
     // 復号化した結果が元のデータと等しい
     expect(decryptedData).toEqual(mockMessageData);
+  });
+
+  it("メッセージデータを暗号化する際にstringfyに失敗すると例外が発生する。", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jest.spyOn(typiaValidators, "isMessageDataStringfy").mockReturnValueOnce(null);
+
+    expect(() => cryptoAgent.encrypt(mockMessageData)).toThrow();
   });
 });
