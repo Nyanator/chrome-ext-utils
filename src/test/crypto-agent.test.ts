@@ -3,7 +3,7 @@ import { container } from "tsyringe";
 import { AESCryptoAgent, CryptoAgent } from "../crypto-agent";
 import { MessageData } from "../message-validator";
 import { SessionStaticKey } from "../session-static-value";
-import * as typiaValidators from "../typia/generated/validators";
+import * as typiaValidators from "../typia/generated/generate-validators";
 
 import {
   initChromeSession,

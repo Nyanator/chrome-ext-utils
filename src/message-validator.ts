@@ -7,7 +7,10 @@ import { inject, injectable } from "tsyringe";
 import { CryptoAgent } from "./crypto-agent";
 import { Logger } from "./logger";
 import { SessionStaticValue } from "./session-static-value";
-import { equalsTypedRealMessage, isMessageDataParse } from "./typia/generated/validators";
+import {
+  equalsTypedRealMessage,
+  isMessageDataParse,
+} from "./typia/generated/generate-validators";
 import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";
 

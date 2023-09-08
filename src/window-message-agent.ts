@@ -8,6 +8,8 @@ import { inject, injectable } from "tsyringe";
 import { Logger } from "./logger";
 import { MessageValidatorManager } from "./message-validatior-manager";
 import { MessageData, MessageValidatorConfig } from "./message-validator";
+import { windowMessageAgentImplValidators } from "./typia/generated/generate-validators";
+import { validateMethod } from "./utils/validate-method";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ウィンドウ) */
 export interface WindowMessageAgent {
@@ -54,6 +56,7 @@ export class WindowMessageAgentImpl implements WindowMessageAgent {
     @inject("Logger") private readonly logger: Logger,
   ) {}
 
+  @validateMethod(windowMessageAgentImplValidators.postMessage)
   async postMessage(arg: {
     target: Window;
     channel?: string;
@@ -79,6 +82,7 @@ export class WindowMessageAgentImpl implements WindowMessageAgent {
     );
   }
 
+  @validateMethod(windowMessageAgentImplValidators.addListener)
   addListener(arg: { channel?: string; listener: (event: MessageData) => void }): void {
     const newListener = async (event: MessageEvent) => {
       const messageData = await this.validatorManager.processValidation({
@@ -97,6 +101,7 @@ export class WindowMessageAgentImpl implements WindowMessageAgent {
     window.addEventListener("message", newListener);
   }
 
+  @validateMethod(windowMessageAgentImplValidators.removeListener)
   removeListener(listener: (event: MessageData) => void): void {
     const windowListener = this.windowListeners.get(listener);
     if (windowListener) {
@@ -105,6 +110,7 @@ export class WindowMessageAgentImpl implements WindowMessageAgent {
     }
   }
 
+  @validateMethod(windowMessageAgentImplValidators.clearListeners)
   clearListeners(): void {
     this.windowListeners.forEach((listener) => {
       window.removeEventListener("message", listener);

@@ -9,7 +9,10 @@ import { injectable } from "tsyringe";
 import { Logger } from "./logger";
 import { MessageData } from "./message-validator";
 import { SessionStaticValue } from "./session-static-value";
-import { isMessageDataParse, isMessageDataStringfy } from "./typia/generated/validators";
+import {
+  isMessageDataParse,
+  isMessageDataStringfy,
+} from "./typia/generated/generate-validators";
 import { injectOptional } from "./utils/inject-optional";
 import { assertNotNull } from "./utils/ts-utils";
 

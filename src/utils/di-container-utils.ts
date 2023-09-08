@@ -23,6 +23,9 @@ import { ErrorListener } from "./error-listener";
 
 /**
  * DIコンテナを初期化します。
+ * @param databaseName 永続化データベースの名前
+ * @param storeName 永続化データベースのストア名
+ * @param allowedOrigins メッセージ通信に使うオリジンのホワイトリスト
  */
 export const initializeDIContainer = (arg: {
   databaseName: string;

@@ -7,7 +7,9 @@ import { inject, injectable } from "tsyringe";
 import { Logger } from "./logger";
 import { MessageValidatorManager } from "./message-validatior-manager";
 import { MessageData } from "./message-validator";
+import { runtimeMessageAgentImplValidators } from "./typia/generated/generate-validators";
 import { assertNotNull } from "./utils/ts-utils";
+import { validateMethod } from "./utils/validate-method";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ランタイム) */
 export interface RuntimeMessageAgent {
@@ -59,6 +61,7 @@ export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
     @inject("Logger") private readonly logger: Logger,
   ) {}
 
+  @validateMethod(runtimeMessageAgentImplValidators.sendMessage)
   async sendMessage(arg: {
     channel?: string;
     message: MessageData;
@@ -86,6 +89,7 @@ export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
     });
   }
 
+  @validateMethod(runtimeMessageAgentImplValidators.addListener)
   addListener(arg: {
     channel?: string;
     listener: (messageData: MessageData) => Promise<MessageData | void>;
@@ -118,6 +122,7 @@ export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
     chrome.runtime.onMessage.addListener(newListener);
   }
 
+  @validateMethod(runtimeMessageAgentImplValidators.removeListener)
   removeListener(
     listener: (messageData: MessageData) => Promise<MessageData | void>,
   ): void {
@@ -128,6 +133,7 @@ export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
     }
   }
 
+  @validateMethod(runtimeMessageAgentImplValidators.clearListeners)
   clearListeners(): void {
     this.runtimeListeners.forEach((listener) => {
       chrome.runtime.onMessage.removeListener(listener);
