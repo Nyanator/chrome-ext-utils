@@ -28,8 +28,8 @@ import { ErrorListener } from "./error-listener";
  * @param allowedOrigins メッセージ通信に使うオリジンのホワイトリスト
  */
 export const initializeDIContainer = (arg: {
-  databaseName: string;
-  storeName: string;
+  databaseName?: string;
+  storeName?: string;
   allowedOrigins: string[];
 }): void => {
   container.clearInstances();
@@ -44,16 +44,18 @@ export const initializeDIContainer = (arg: {
     useClass: AESCryptoAgent,
   });
 
-  container.register<DatabaseAgentConfig>("DatabaseAgentConfig", {
-    useValue: {
-      databaseName: arg.databaseName,
-      storeName: arg.storeName,
-    },
-  });
+  if (arg.databaseName && arg.storeName) {
+    container.register<DatabaseAgentConfig>("DatabaseAgentConfig", {
+      useValue: {
+        databaseName: arg.databaseName,
+        storeName: arg.storeName,
+      },
+    });
 
-  container.register<DatabaseAgent>("DatabaseAgent", {
-    useClass: IndexdDBDatabaseAgent,
-  });
+    container.register<DatabaseAgent>("DatabaseAgent", {
+      useClass: IndexdDBDatabaseAgent,
+    });
+  }
 
   container.register("ErrorListener", {
     useClass: ErrorListener,

@@ -4,10 +4,10 @@
 
 import "reflect-metadata";
 import { inject, injectable } from "tsyringe";
-import { ErrorListener } from "utils/error-listener";
 
 import { Logger } from "./logger";
 import { AlertNamedError } from "./utils/alert-named-error";
+import { ErrorListener } from "./utils/error-listener";
 
 /** グローバルエラーイベントを監視 */
 export interface ErrorObserver {

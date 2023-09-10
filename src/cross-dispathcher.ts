@@ -23,10 +23,10 @@ export interface CrossDispatcher<T extends ChannelMap> extends ChannelListenerMa
    * @param channelData ディスパッチするチャンネルのデータ
    * @returns リスナーからの応答リスト
    */
-  dispatch<K extends keyof T>(arg: {
-    channelKey: K;
-    channelData: ChannelData<T, K>;
-  }): Promise<ChannelResponse<T, K>[]>;
+  dispatch<K extends keyof T>(
+    channelKey: K,
+    channelData: ChannelData<T, K>,
+  ): Promise<ChannelResponse<T, K>[]>;
 }
 
 /** 構築設定 */
@@ -52,34 +52,32 @@ export class CrossDispatcherImpl<T extends ChannelMap> implements CrossDispatche
     this.channelListenerMap.channel(channelMap);
   }
 
-  async dispatch<K extends keyof T>(arg: {
-    channelKey: K;
-    channelData: ChannelData<T, K>;
-  }): Promise<ChannelResponse<T, K>[]> {
-    const listeners = this.channelListenerMap.getListeners().get(arg.channelKey);
+  async dispatch<K extends keyof T>(
+    channelKey: K,
+    channelData: ChannelData<T, K>,
+  ): Promise<ChannelResponse<T, K>[]> {
+    const listeners = this.channelListenerMap.getListeners().get(channelKey);
 
     // 疎結合にするためのディスパッチなのでリスナーがいない場合は空を返す
     if (!listeners) {
-      this.handleError(
-        `No listeners registered for channel: ${arg.channelKey.toString()}`,
-      );
+      this.handleError(`No listeners registered for channel: ${channelKey.toString()}`);
       return [];
     }
 
     const responses: ChannelResponse<T, K>[] = [];
-    if (this.dispatchingChannel.has(arg.channelKey)) {
+    if (this.dispatchingChannel.has(channelKey)) {
       this.handleError(
-        `recursively called. Stop to prevent stack overflow. for channel: ${arg.channelKey.toString()}`,
+        `recursively called. Stop to prevent stack overflow. for channel: ${channelKey.toString()}`,
       );
       return []; // すでに同じチャンネルが呼び出し中なので何もしない
     }
-    this.dispatchingChannel.add(arg.channelKey); // チャンネルを呼び出し中としてマーク
+    this.dispatchingChannel.add(channelKey); // チャンネルを呼び出し中としてマーク
 
     // 本来例外を握りつぶすべきではないが、
     // この場合疎結合性を担保するべきであり、例外処理をしないリスナーに責務がある
     for (const listener of listeners) {
       try {
-        const response = listener(arg.channelData);
+        const response = listener(channelData);
         if (response instanceof Promise) {
           const result = await response;
           responses.push(result);
@@ -87,25 +85,20 @@ export class CrossDispatcherImpl<T extends ChannelMap> implements CrossDispatche
           responses.push(response);
         }
       } catch (error) {
-        this.handleError(
-          `Error handling channel: ${arg.channelKey.toString()}: ${error}`,
-        );
+        this.handleError(`Error handling channel: ${channelKey.toString()}: ${error}`);
       }
     }
 
-    this.dispatchingChannel.delete(arg.channelKey); // チャンネル呼び出し終了
+    this.dispatchingChannel.delete(channelKey); // チャンネル呼び出し終了
 
     return responses;
   }
 
-  remove<K extends keyof T>(arg: {
-    channelKey: K;
-    removeTarget: ChannelListener<T, keyof T>;
-  }): void {
-    this.channelListenerMap.remove({
-      channelKey: arg.channelKey,
-      removeTarget: arg.removeTarget,
-    });
+  remove<K extends keyof T>(
+    channelKey: K,
+    removeTarget: ChannelListener<T, keyof T>,
+  ): void {
+    this.channelListenerMap.remove(channelKey, removeTarget);
   }
 
   removeForChannel<K extends keyof T>(channelKey: K): void {

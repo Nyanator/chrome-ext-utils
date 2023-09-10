@@ -79,6 +79,7 @@ describe("MessageValidatorManagerクラスのテスト", () => {
     MockUtils.mockMessageValidator.isValid.mockReturnValueOnce(true);
     const result = await messageValidatorManager.processValidation({
       origin: MockUtils.allowedOrigins[0],
+      channel: MockUtils.channel,
       message: mockValidMessage,
     });
     expect(result).toBe(true);
@@ -88,6 +89,7 @@ describe("MessageValidatorManagerクラスのテスト", () => {
     MockUtils.mockMessageValidator.isValid.mockReturnValueOnce(undefined);
     const result = await messageValidatorManager.processValidation({
       origin: MockUtils.allowedOrigins[0],
+      channel: MockUtils.channel,
       message: mockInValidRuntimeIdMessage,
     });
     expect(result).toBeUndefined();

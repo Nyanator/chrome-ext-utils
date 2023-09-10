@@ -8,8 +8,6 @@ import { inject, injectable } from "tsyringe";
 import { Logger } from "./logger";
 import { MessageValidatorManager } from "./message-validatior-manager";
 import { MessageData, MessageValidatorConfig } from "./message-validator";
-import { windowMessageAgentImplValidators } from "./typia/generated/generate-validators";
-import { validateMethod } from "./utils/validate-method";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ウィンドウ) */
 export interface WindowMessageAgent {
@@ -20,19 +18,19 @@ export interface WindowMessageAgent {
    * @param channel 送信先のチャンネル
    * @param message 送信するメッセージデータ
    */
-  postMessage(arg: {
-    target: Window;
-    targetOrigin: string;
-    channel?: string;
-    message: MessageData;
-  }): Promise<void>;
+  postMessage(
+    target: Window,
+    targetOrigin: string,
+    channel: string,
+    message: MessageData,
+  ): Promise<void>;
 
   /**
    * ウィンドウメッセージを受信し、復号化してリスナー関数に渡します。
    * @param channel 受信チャンネル
    * @param listener メッセージ受信時に呼び出されるリスナー関数
    */
-  addListener(arg: { channel?: string; listener: (event: MessageData) => void }): void;
+  addListener(channel: string, listener: (event: MessageData) => void): void;
 
   /** 指定したリスナーを解除します。*/
   removeListener(listener: (event: MessageData) => void): void;
@@ -56,52 +54,49 @@ export class WindowMessageAgentImpl implements WindowMessageAgent {
     @inject("Logger") private readonly logger: Logger,
   ) {}
 
-  @validateMethod(windowMessageAgentImplValidators.postMessage)
-  async postMessage(arg: {
-    target: Window;
-    channel?: string;
-    targetOrigin: string;
-    message: MessageData;
-  }): Promise<void> {
-    if (!this.validatorConfig.allowedOrigins.includes(arg.targetOrigin)) {
-      throw new Error(`Invalid targetOrigin: ${arg.targetOrigin}`);
+  async postMessage(
+    target: Window,
+    targetOrigin: string,
+    channel: string,
+    message: MessageData,
+  ): Promise<void> {
+    if (!this.validatorConfig.allowedOrigins.includes(targetOrigin)) {
+      throw new Error(`Invalid targetOrigin: ${targetOrigin}`);
     }
 
     const latestValidator = await this.validatorManager.getLatestValidator();
     const cryptoAgent = latestValidator.getCryptoAgent();
-    const messageData = cryptoAgent?.encrypt(arg.message) ?? JSON.stringify(arg.message);
+    const messageData = cryptoAgent.encrypt(message);
     const latestToken = latestValidator.getProvider().getValue();
 
-    arg.target.postMessage(
+    target.postMessage(
       {
         token: latestToken,
-        channel: arg.channel,
+        channel: channel,
         messageData: messageData,
       },
-      arg.targetOrigin,
+      targetOrigin,
     );
   }
 
-  @validateMethod(windowMessageAgentImplValidators.addListener)
-  addListener(arg: { channel?: string; listener: (event: MessageData) => void }): void {
+  addListener(channel: string, listener: (event: MessageData) => void): void {
     const newListener = async (event: MessageEvent) => {
       const messageData = await this.validatorManager.processValidation({
         origin: event.origin,
-        channel: arg.channel,
+        channel: channel,
         message: event.data,
       });
       if (!messageData) {
         return;
       }
 
-      arg.listener(messageData);
+      listener(messageData);
     };
 
-    this.windowListeners.set(arg.listener, newListener);
+    this.windowListeners.set(listener, newListener);
     window.addEventListener("message", newListener);
   }
 
-  @validateMethod(windowMessageAgentImplValidators.removeListener)
   removeListener(listener: (event: MessageData) => void): void {
     const windowListener = this.windowListeners.get(listener);
     if (windowListener) {
@@ -110,7 +105,6 @@ export class WindowMessageAgentImpl implements WindowMessageAgent {
     }
   }
 
-  @validateMethod(windowMessageAgentImplValidators.clearListeners)
   clearListeners(): void {
     this.windowListeners.forEach((listener) => {
       window.removeEventListener("message", listener);

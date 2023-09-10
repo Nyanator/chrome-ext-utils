@@ -37,7 +37,7 @@ describe("ChannelListenerMap クラス", () => {
       channel1: channelListener,
     });
 
-    map.remove({ channelKey: "channel1", removeTarget: channelListener });
+    map.remove("channel1", channelListener);
 
     expect(map.getListeners().get("channel1")?.length).toBe(0);
   });
@@ -51,10 +51,7 @@ describe("ChannelListenerMap クラス", () => {
       channel1: channelListener,
     });
 
-    map.remove({
-      channelKey: "unRegisterdchannelListener",
-      removeTarget: unRegisterdchannelListener,
-    });
+    map.remove("unRegisterdchannelListener", unRegisterdchannelListener);
   });
 
   it("チャンネルキーに紐づくリスナーを全て解除できる", () => {

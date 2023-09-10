@@ -5,7 +5,7 @@
 import "reflect-metadata";
 import { injectable } from "tsyringe";
 
-type ErrorHandler = (event: ErrorEvent | PromiseRejectionEvent) => void;
+export type ErrorHandler = (event: ErrorEvent | PromiseRejectionEvent) => void;
 
 @injectable()
 export class ErrorListener {

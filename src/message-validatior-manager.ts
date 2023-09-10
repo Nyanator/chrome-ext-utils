@@ -80,7 +80,7 @@ export class MessageValidatorManagerImpl implements MessageValidatorManager {
 
     if (isBackground()) {
       const tokenProvider = newValidator.getProvider();
-      const keyProvider = newValidator.getCryptoAgent()?.getProvider();
+      const keyProvider = newValidator.getCryptoAgent().getProvider();
 
       // 新しいValidatorのトークンとキーを再作成する
       await tokenProvider.generateValue(true);
@@ -120,7 +120,7 @@ export class MessageValidatorManagerImpl implements MessageValidatorManager {
     const newValidator = container.resolve<MessageValidator>("MessageValidator");
 
     const tokenProvider = newValidator.getProvider();
-    const keyProvider = newValidator.getCryptoAgent()?.getProvider();
+    const keyProvider = newValidator.getCryptoAgent().getProvider();
     await tokenProvider.generateValue(false);
     await keyProvider?.generateValue(false);
 

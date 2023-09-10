@@ -19,7 +19,7 @@ export interface DatabaseAgent {
    * @param data 保存するデータ
    * @returns データの保存が完了したときに解決されるプロミス
    */
-  save(arg: { key: string; data: unknown }): Promise<void>;
+  save(key: string, data: unknown): Promise<void>;
   /**
    * キーに対応するデータを取得します。
    * @param key データのキー
@@ -77,11 +77,11 @@ export class IndexdDBDatabaseAgent implements DatabaseAgent {
     });
   }
 
-  async save(arg: { key: string; data: unknown }): Promise<void> {
+  async save(key: string, data: unknown): Promise<void> {
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([this.config.storeName], "readwrite");
       const objectStore = transaction.objectStore(this.config.storeName);
-      const request = objectStore.put(arg.data, arg.key);
+      const request = objectStore.put(data, key);
 
       request.onerror = () => {
         reject(new Error());

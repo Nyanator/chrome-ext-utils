@@ -42,10 +42,7 @@ describe("CrossDispatcherクラス", () => {
       },
     });
 
-    const result = await dispatcher.dispatch({
-      channelKey: "channel1",
-      channelData,
-    });
+    const result = await dispatcher.dispatch("channel1", channelData);
     expect(listenerCalled).toBe(true);
     expect(result[0]).toBe(channelData);
 
@@ -71,18 +68,9 @@ describe("CrossDispatcherクラス", () => {
     });
 
     Promise.all([
-      dispatcher.dispatch({
-        channelKey: "channel1",
-        channelData,
-      }),
-      dispatcher.dispatch({
-        channelKey: "channel2",
-        channelData,
-      }),
-      dispatcher.dispatch({
-        channelKey: "channel3",
-        channelData,
-      }),
+      dispatcher.dispatch("channel1", channelData),
+      dispatcher.dispatch("channel2", channelData),
+      dispatcher.dispatch("channel3", channelData),
     ]);
     expect(listenerCalled.every((called) => called)).toEqual(true);
   });
@@ -104,10 +92,7 @@ describe("CrossDispatcherクラス", () => {
       },
     });
 
-    await dispatcher.dispatch({
-      channelKey: "channel1",
-      channelData,
-    });
+    await dispatcher.dispatch("channel1", channelData);
     expect(listenerCalled[0]).toEqual(true);
     expect(listenerCalled[1]).toEqual(false);
     expect(listenerCalled[2]).toEqual(false);
@@ -129,14 +114,8 @@ describe("CrossDispatcherクラス", () => {
       },
     });
 
-    await dispatcher.dispatch({
-      channelKey: "channel1",
-      channelData,
-    });
-    await dispatcher.dispatch({
-      channelKey: "channel2",
-      channelData,
-    });
+    await dispatcher.dispatch("channel1", channelData);
+    await dispatcher.dispatch("channel2", channelData);
     expect(listener1Called).toBe(true);
     expect(listener2Called).toBe(true);
   });
@@ -159,10 +138,7 @@ describe("CrossDispatcherクラス", () => {
       },
     });
 
-    const responses = await dispatcher.dispatch({
-      channelKey: "channel1",
-      channelData: 1,
-    });
+    const responses = await dispatcher.dispatch("channel1", 1);
     expect(responses[0]).toBe(1);
     expect(responses[1]).toBe(2);
     expect(responses[2]).toBe(3);
@@ -184,10 +160,7 @@ describe("CrossDispatcherクラス", () => {
       channel1: listener,
     });
 
-    const responses = await dispatcher.dispatch({
-      channelKey: "channel1",
-      channelData: 1,
-    });
+    const responses = await dispatcher.dispatch("channel1", 1);
     expect(responses[0]).toBe(0);
     expect(responses[1]).toBe(1);
     expect(responses[2]).toBe(2);
@@ -216,10 +189,7 @@ describe("CrossDispatcherクラス", () => {
       },
     });
 
-    await dispatcher.dispatch({
-      channelKey: "channel1",
-      channelData: channelData,
-    });
+    await dispatcher.dispatch("channel1", channelData);
     expect(listenerCalled.every((called) => called)).toEqual(true);
   });
 
@@ -232,31 +202,20 @@ describe("CrossDispatcherクラス", () => {
 
     dispatcher.channel({
       channel1: async () => {
-        await dispatcher.dispatch({
-          channelKey: "channel2",
-          channelData: "abc",
-        });
+        await dispatcher.dispatch("channel2", "abc");
         return 1;
       },
       channel2: async () => {
-        await dispatcher.dispatch({
-          channelKey: "channel3",
-          channelData: new Map<string, string>(),
-        });
+        await dispatcher.dispatch("channel3", new Map<string, string>());
         return "abc";
       },
       channel3: async () => {
-        expect(
-          dispatcher.dispatch({
-            channelKey: "channel1",
-            channelData: 3,
-          }),
-        ).toBe([]);
+        expect(dispatcher.dispatch("channel1", 3)).toBe([]);
         return new Map<string, string>();
       },
     });
 
-    await dispatcher.dispatch({ channelKey: "channel1", channelData: 1 });
+    await dispatcher.dispatch("channel1", 1);
   });
 
   it("strictModeが有効な場合、再起呼び出しの際に例外が発生する", async () => {
@@ -268,31 +227,20 @@ describe("CrossDispatcherクラス", () => {
 
     dispatcher.channel({
       channel1: async () => {
-        await dispatcher.dispatch({
-          channelKey: "channel2",
-          channelData: "abc",
-        });
+        await dispatcher.dispatch("channel2", "abc");
         return 1;
       },
       channel2: async () => {
-        await dispatcher.dispatch({
-          channelKey: "channel3",
-          channelData: new Map<string, string>(),
-        });
+        await dispatcher.dispatch("channel3", new Map<string, string>());
         return "abc";
       },
       channel3: async () => {
-        await expect(
-          dispatcher.dispatch({
-            channelKey: "channel1",
-            channelData: 3,
-          }),
-        ).rejects.toThrowError();
+        await expect(dispatcher.dispatch("channel1", 3)).rejects.toThrowError();
         return new Map<string, string>();
       },
     });
 
-    await dispatcher.dispatch({ channelKey: "channel1", channelData: 1 });
+    await dispatcher.dispatch("channel1", 1);
   });
 
   it("strictModeが無効な場合、購読されていないイベントのディスパッチには空の配列を返す", async () => {
@@ -301,10 +249,7 @@ describe("CrossDispatcherクラス", () => {
     });
 
     const dispatcher = container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
-    const responses = await dispatcher.dispatch({
-      channelKey: "nonExistentchannel",
-      channelData: {},
-    });
+    const responses = await dispatcher.dispatch("nonExistentchannel", {});
     expect(responses).toEqual([]);
   });
 
@@ -320,10 +265,7 @@ describe("CrossDispatcherクラス", () => {
       },
     });
 
-    const responses = await dispatcher.dispatch({
-      channelKey: "channel1",
-      channelData: {},
-    });
+    const responses = await dispatcher.dispatch("channel1", {});
     expect(responses).toEqual([]);
   });
 
@@ -339,10 +281,7 @@ describe("CrossDispatcherクラス", () => {
       },
     });
 
-    const responses = await dispatcher.dispatch({
-      channelKey: "channel1",
-      channelData: {},
-    });
+    const responses = await dispatcher.dispatch("channel1", {});
     expect(responses).toEqual([]);
   });
 
@@ -353,12 +292,7 @@ describe("CrossDispatcherクラス", () => {
 
     const dispatcher = container.resolve<CrossDispatcher<ChannelMap>>("CrossDispatcher");
 
-    await expect(
-      dispatcher.dispatch({
-        channelKey: "nonExistentchannel",
-        channelData: {},
-      }),
-    ).rejects.toThrowError();
+    await expect(dispatcher.dispatch("nonExistentchannel", {})).rejects.toThrowError();
   });
 
   it("strictModeが有効な場合、非同期リスナーが例外をスローすると再スローされる", async () => {
@@ -374,9 +308,7 @@ describe("CrossDispatcherクラス", () => {
       },
     });
 
-    await expect(
-      dispatcher.dispatch({ channelKey: "channel1", channelData: {} }),
-    ).rejects.toThrowError();
+    await expect(dispatcher.dispatch("channel1", {})).rejects.toThrowError();
   });
 
   it("strictModeが有効な場合、同期的なリスナーが例外をスローすると再スローされる", async () => {
@@ -392,9 +324,7 @@ describe("CrossDispatcherクラス", () => {
       },
     });
 
-    await expect(
-      dispatcher.dispatch({ channelKey: "channel1", channelData: {} }),
-    ).rejects.toThrowError();
+    await expect(dispatcher.dispatch("channel1", {})).rejects.toThrowError();
   });
 
   it("リスナーを正しく解除できる", () => {
@@ -408,11 +338,8 @@ describe("CrossDispatcherクラス", () => {
       channel1: channelListener,
     });
 
-    dispatcher.remove({
-      channelKey: "channel1",
-      removeTarget: channelListener,
-    });
-    dispatcher.dispatch({ channelKey: "channel1", channelData: {} });
+    dispatcher.remove("channel1", channelListener);
+    dispatcher.dispatch("channel1", {});
     expect(listenerCalled).toBe(false);
   });
 
@@ -428,11 +355,8 @@ describe("CrossDispatcherクラス", () => {
       channel1: channelListener,
     });
 
-    dispatcher.remove({
-      channelKey: "unRegisterdchannelListener",
-      removeTarget: unRegisterdchannelListener,
-    });
-    dispatcher.dispatch({ channelKey: "channel1", channelData: {} });
+    dispatcher.remove("unRegisterdchannelListener", unRegisterdchannelListener);
+    dispatcher.dispatch("channel1", {});
     expect(listenerCalled).toBe(true);
   });
 
@@ -453,7 +377,7 @@ describe("CrossDispatcherクラス", () => {
     });
 
     dispatcher.removeForChannel("channel1");
-    dispatcher.dispatch({ channelKey: "channel1", channelData: {} });
+    dispatcher.dispatch("channel1", {});
     expect(listenerCalled).toBe(false);
   });
 
@@ -472,12 +396,8 @@ describe("CrossDispatcherクラス", () => {
     });
 
     dispatcher.clearListeners();
-    await expect(
-      dispatcher.dispatch({ channelKey: "channel1", channelData: {} }),
-    ).rejects.toThrow();
-    await expect(
-      dispatcher.dispatch({ channelKey: "channel2", channelData: {} }),
-    ).rejects.toThrow();
+    await expect(dispatcher.dispatch("channel1", {})).rejects.toThrow();
+    await expect(dispatcher.dispatch("channel2", {})).rejects.toThrow();
     expect(listener1Called).toBe(false);
     expect(listener2Called).toBe(false);
   });
@@ -492,54 +412,29 @@ describe("CrossDispatcherクラス", () => {
       container.resolve<CrossDispatcher<TestChannelMap>>("CrossDispatcher");
 
     // 型推論が働けばコンパイルが通る
-    const numbers: number[] = await dispatcher.dispatch({
-      channelKey: "channel1",
-      channelData: 1,
+    const numbers: number[] = await dispatcher.dispatch("channel1", 1);
+    const strings: string[] = await dispatcher.dispatch("channel2", "abc");
+    const maps: Map<string, string>[] = await dispatcher.dispatch(
+      "channel3",
+      new Map<string, string>(),
+    );
+    const interfaces: TestInterface[] = await dispatcher.dispatch("channel4", {
+      value: 1,
     });
-    const strings: string[] = await dispatcher.dispatch({
-      channelKey: "channel2",
-      channelData: "abc",
+    const types: TestType[] = await dispatcher.dispatch("channel5", {
+      value: 1,
     });
-    const maps: Map<string, string>[] = await dispatcher.dispatch({
-      channelKey: "channel3",
-      channelData: new Map<string, string>(),
+    const records: Record<string, number>[] = await dispatcher.dispatch("channel6", {
+      value: 1,
     });
-    const interfaces: TestInterface[] = await dispatcher.dispatch({
-      channelKey: "channel4",
-      channelData: {
-        value: 1,
-      },
-    });
-    const types: TestType[] = await dispatcher.dispatch({
-      channelKey: "channel5",
-      channelData: {
-        value: 1,
-      },
-    });
-    const records: Record<string, number>[] = await dispatcher.dispatch({
-      channelKey: "channel6",
-      channelData: { value: 1 },
-    });
-    const undefines: undefined[] = await dispatcher.dispatch({
-      channelKey: "channel7",
-      channelData: undefined,
-    });
-    const unknowns: unknown[] = await dispatcher.dispatch({
-      channelKey: "channel8",
-      channelData: {},
-    });
-    const nulls: null[] = await dispatcher.dispatch({
-      channelKey: "channel9",
-      channelData: null,
-    });
-    const anys: any[] = await dispatcher.dispatch({
-      channelKey: "channel10",
-      channelData: {},
-    });
-    const undefinedchannels: unknown[] = await dispatcher.dispatch({
-      channelKey: "undefined channel",
-      channelData: {},
-    });
+    const undefines: undefined[] = await dispatcher.dispatch("channel7", undefined);
+    const unknowns: unknown[] = await dispatcher.dispatch("channel8", {});
+    const nulls: null[] = await dispatcher.dispatch("channel9", null);
+    const anys: any[] = await dispatcher.dispatch("channel10", {});
+    const undefinedchannels: unknown[] = await dispatcher.dispatch(
+      "undefined channel",
+      {},
+    );
   });
   /* eslint-enable */
 });

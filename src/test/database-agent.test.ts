@@ -41,7 +41,7 @@ describe("DatabaseAgentクラス", () => {
   it("データを保存し、再取得する", async () => {
     await db.open();
 
-    await expect(db.save({ key: key, data: data })).resolves.not.toThrow();
+    await expect(db.save(key, data)).resolves.not.toThrow();
     const retrievedData = await db.get(key);
     expect(retrievedData).toBe(data);
   });
@@ -49,7 +49,7 @@ describe("DatabaseAgentクラス", () => {
   it("データを保存し、削除する", async () => {
     await db.open();
 
-    await db.save({ key: key, data: data });
+    await db.save(key, data);
     await db.delete(key);
     const retrievedData = await db.get(key);
     expect(retrievedData).toBeUndefined();
@@ -113,7 +113,7 @@ describe("DatabaseAgentクラス", () => {
 
     // エラーハンドラをトリガ
     process.nextTick(() => mockRequest.onerror?.());
-    await expect(db.save({ key, data })).rejects.toThrow();
+    await expect(db.save(key, data)).rejects.toThrow();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (db as any).db = oldDb;
   });

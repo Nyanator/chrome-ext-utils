@@ -56,12 +56,14 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid({
         origin: MockUtils.mockValidatorConfig.allowedOrigins[0],
+        channel: MockUtils.channel,
         message: mockValidMessage,
       }),
     ).toBeTruthy();
     expect(
       validator.isValid({
         origin: MockUtils.mockValidatorConfig.allowedOrigins[1],
+        channel: MockUtils.channel,
         message: mockValidMessage,
       }),
     ).toBeTruthy();
@@ -71,6 +73,7 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid({
         origin: MockUtils.invalidOrigin,
+        channel: MockUtils.channel,
         message: mockValidMessage,
       }),
     ).toBeUndefined();
@@ -81,6 +84,7 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid({
         origin: MockUtils.mockValidatorConfig.allowedOrigins[0],
+        channel: MockUtils.channel,
         message: invalidTokenMessage,
       }),
     ).toBeUndefined();
@@ -90,6 +94,7 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid({
         origin: MockUtils.mockValidatorConfig.allowedOrigins[0],
+        channel: MockUtils.channel,
         message: MockUtils.invalidStructureMessage,
       }),
     ).toBeUndefined();
@@ -99,6 +104,7 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid({
         origin: MockUtils.mockValidatorConfig.allowedOrigins[0],
+        channel: MockUtils.channel,
         message: undefined,
       }),
     ).toBeUndefined();
@@ -111,6 +117,7 @@ describe("MessageValidatorクラス", () => {
     expect(
       validator.isValid({
         origin: MockUtils.mockValidatorConfig.allowedOrigins[0],
+        channel: MockUtils.channel,
         message: invalidRuntimeIdMessage,
       }),
     ).toBeUndefined();
@@ -131,21 +138,9 @@ describe("MessageValidatorクラス", () => {
     expect(() => {
       validator.isValid({
         origin: MockUtils.mockValidatorConfig.allowedOrigins[0],
+        channel: MockUtils.channel,
         message: diffrentKeyMessage,
       });
     }).toThrow();
-  });
-
-  it("CryptoAgentを使用しない時、正しいOriginとメッセージが検証を通過する", async () => {
-    container.register("CryptoAgent", {
-      useValue: undefined,
-    });
-    const rawValidator = container.resolve<MessageValidator>("MessageValidator");
-    expect(
-      rawValidator.isValid({
-        origin: MockUtils.mockValidatorConfig.allowedOrigins[0],
-        message: MockUtils.rawValidMessage,
-      }),
-    ).toBeTruthy();
   });
 });

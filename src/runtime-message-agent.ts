@@ -7,9 +7,7 @@ import { inject, injectable } from "tsyringe";
 import { Logger } from "./logger";
 import { MessageValidatorManager } from "./message-validatior-manager";
 import { MessageData } from "./message-validator";
-import { runtimeMessageAgentImplValidators } from "./typia/generated/generate-validators";
 import { assertNotNull } from "./utils/ts-utils";
-import { validateMethod } from "./utils/validate-method";
 
 /** メッセージの暗号化と復号化を管理し、各コンテキスト間での送受信をサポート(ランタイム) */
 export interface RuntimeMessageAgent {
@@ -19,25 +17,25 @@ export interface RuntimeMessageAgent {
    * @param message 送信するメッセージデータ
    * @param tabId 送信先タブの ID
    */
-  sendMessage(arg: {
-    channel?: string;
-    message: MessageData;
-    tabId?: number;
-  }): Promise<MessageData | void>;
+  sendMessage(
+    channel: string,
+    message: MessageData,
+    tabId?: number,
+  ): Promise<MessageData | void>;
 
   /**
    * ランタイムメッセージを受信し、復号化してリスナー関数に渡します。
    * @param channel 受信チャンネル
    * @param listener メッセージ受信時に呼び出されるリスナー関数
    */
-  addListener(arg: {
-    channel?: string;
-    listener: (messageData: MessageData) => Promise<MessageData | void>;
-  }): void;
+  addListener(
+    channel: string,
+    listener: (messageData: MessageData) => Promise<MessageData | void> | void,
+  ): void;
 
   /** 指定したリスナーを解除します。*/
   removeListener(
-    listener: (messageData: MessageData) => Promise<MessageData | void>,
+    listener: (messageData: MessageData) => Promise<MessageData | void> | void,
   ): void;
 
   /** リスナーをすべて解除します。*/
@@ -47,7 +45,7 @@ export interface RuntimeMessageAgent {
 @injectable()
 export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
   private readonly runtimeListeners: Map<
-    (messageData: MessageData) => Promise<MessageData | void>,
+    (messageData: MessageData) => Promise<MessageData | void> | void,
     (
       message: unknown,
       sender: chrome.runtime.MessageSender,
@@ -61,39 +59,37 @@ export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
     @inject("Logger") private readonly logger: Logger,
   ) {}
 
-  @validateMethod(runtimeMessageAgentImplValidators.sendMessage)
-  async sendMessage(arg: {
-    channel?: string;
-    message: MessageData;
-    tabId?: number;
-  }): Promise<MessageData | void> {
+  async sendMessage(
+    channel: string,
+    message: MessageData,
+    tabId?: number,
+  ): Promise<MessageData | void> {
     const latestValidator = await this.validatorManager.getLatestValidator();
 
     const cryptoAgent = latestValidator.getCryptoAgent();
-    const messageData = cryptoAgent?.encrypt(arg.message) ?? JSON.stringify(arg.message);
+    const messageData = cryptoAgent.encrypt(message);
     const latestToken = latestValidator.getProvider().getValue();
 
-    if (!arg.tabId) {
+    if (!tabId) {
       const latestRuntimeId = latestValidator.getConfig().runtimeId;
       return chrome.runtime.sendMessage(latestRuntimeId, {
         token: latestToken,
-        channel: arg.channel,
+        channel: channel,
         messageData: messageData,
       });
     }
 
-    return chrome.tabs.sendMessage(arg.tabId, {
+    return chrome.tabs.sendMessage(tabId, {
       token: latestToken,
-      channel: arg.channel,
+      channel: channel,
       messageData: messageData,
     });
   }
 
-  @validateMethod(runtimeMessageAgentImplValidators.addListener)
-  addListener(arg: {
-    channel?: string;
-    listener: (messageData: MessageData) => Promise<MessageData | void>;
-  }): void {
+  addListener(
+    channel: string,
+    listener: (messageData: MessageData) => Promise<MessageData | void> | void,
+  ): void {
     const newListener = (
       message: unknown,
       sender: chrome.runtime.MessageSender,
@@ -103,14 +99,14 @@ export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
         const senderOrigin = assertNotNull(sender.origin);
         const messageData = await this.validatorManager.processValidation({
           origin: senderOrigin,
-          channel: arg.channel,
+          channel: channel,
           message: message,
         });
         if (!messageData) {
           return;
         }
 
-        const response = await arg.listener(messageData);
+        const response = await listener(messageData);
         sendResponse(response);
       })();
 
@@ -118,13 +114,12 @@ export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
       return true;
     };
 
-    this.runtimeListeners.set(arg.listener, newListener);
+    this.runtimeListeners.set(listener, newListener);
     chrome.runtime.onMessage.addListener(newListener);
   }
 
-  @validateMethod(runtimeMessageAgentImplValidators.removeListener)
   removeListener(
-    listener: (messageData: MessageData) => Promise<MessageData | void>,
+    listener: (messageData: MessageData) => Promise<MessageData | void> | void,
   ): void {
     const runtimeListener = this.runtimeListeners.get(listener);
     if (runtimeListener) {
@@ -133,7 +128,6 @@ export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
     }
   }
 
-  @validateMethod(runtimeMessageAgentImplValidators.clearListeners)
   clearListeners(): void {
     this.runtimeListeners.forEach((listener) => {
       chrome.runtime.onMessage.removeListener(listener);

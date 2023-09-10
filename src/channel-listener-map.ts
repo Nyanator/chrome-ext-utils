@@ -39,10 +39,10 @@ export interface ChannelListenerMap<T extends ChannelMap> {
    * @param channelKey 解除するチャンネルのキー
    * @param removeTarget 解除したいリスナー
    */
-  remove<K extends keyof T>(arg: {
-    channelKey: K;
-    removeTarget: ChannelListener<T, keyof T>;
-  }): void;
+  remove<K extends keyof T>(
+    channelKey: K,
+    removeTarget: ChannelListener<T, keyof T>,
+  ): void;
 
   /**
    * チャンネルに紐づく全てのリスナーを登録解除します。
@@ -79,16 +79,16 @@ export class ChanneListenerMapImpl<T extends ChannelMap>
     }
   }
 
-  remove<K extends keyof T>(arg: {
-    channelKey: K;
-    removeTarget: ChannelListener<T, keyof T>;
-  }): void {
-    const listeners = this.listeners.get(arg.channelKey);
+  remove<K extends keyof T>(
+    channelKey: K,
+    removeTarget: ChannelListener<T, keyof T>,
+  ): void {
+    const listeners = this.listeners.get(channelKey);
     if (!listeners) {
       return;
     }
 
-    const index = listeners.findIndex((listener) => listener === arg.removeTarget);
+    const index = listeners.findIndex((listener) => listener === removeTarget);
     if (index > -1) {
       listeners.splice(index, 1);
     }

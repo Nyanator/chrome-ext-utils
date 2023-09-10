@@ -5,16 +5,16 @@
 import { loadResourceText } from "./chrome-ext-utils";
 import { htmlTextToHtmlElement } from "./dom-utils";
 
-export type ElementSpecifier<T extends Element> = Readonly<{
+export type ElementSpecifier<T extends Element> = {
   id: string;
   elementType: { new (): T };
-}>;
+};
 
 export type ElementMap<Specs> = {
   [K in keyof Specs]: ExtractElement<Specs[K]>;
 };
 
-export type ExtractElement<T> = Readonly<T extends ElementSpecifier<infer E> ? E : never>;
+export type ExtractElement<T> = T extends ElementSpecifier<infer E> ? E : never;
 
 export class ElementLoader<Spec extends { [key: string]: ElementSpecifier<Element> }> {
   readonly elements = {} as ElementMap<Spec>;

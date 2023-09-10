@@ -11,6 +11,7 @@ export const invalidToken = "invalidToken";
 export const provideVedalue = "providedValue";
 export const allowedOrigins = ["origin1", "orgin2"];
 export const invalidOrigin = "invalidOrigin";
+export const channel = "channel";
 export const invalidStructureMessage = {};
 
 export const mockCryptoAgent = {
@@ -51,6 +52,7 @@ export const rawValidMessage = {
   messageData: `{
     "runtimeId": "${runtimeId}",
     "message": "${message}"
+    "channel": "${channel}"
   }`,
 };
 
@@ -59,6 +61,7 @@ export const createMockValidMessage = <T extends MessageData>(
 ) => {
   return {
     token: token,
+    channel: channel,
     messageData: cryptoAgent.encrypt(mockMessageData as T),
   };
 };
@@ -68,6 +71,7 @@ export const createMockInvalidTokenMessage = <T extends MessageData>(
 ) => {
   return {
     token: invalidToken,
+    channel: channel,
     messageData: cryptoAgent.encrypt(mockMessageData as T),
   };
 };
@@ -77,6 +81,7 @@ export const createMockInvalidRuntimeIdMessage = <T extends MessageData>(
 ) => {
   return {
     token: token,
+    channel: channel,
     messageData: cryptoAgent.encrypt(mockInvalidRuntimeIdMessageData as T),
   };
 };

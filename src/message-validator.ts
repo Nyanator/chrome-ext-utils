@@ -7,11 +7,7 @@ import { inject, injectable } from "tsyringe";
 import { CryptoAgent } from "./crypto-agent";
 import { Logger } from "./logger";
 import { SessionStaticValue } from "./session-static-value";
-import {
-  equalsTypedRealMessage,
-  isMessageDataParse,
-} from "./typia/generated/generate-validators";
-import { injectOptional } from "./utils/inject-optional";
+import { equalsTypedRealMessage } from "./typia/generated/generate-validators";
 import { assertNotNull } from "./utils/ts-utils";
 
 export interface MessageValidator {
@@ -22,20 +18,23 @@ export interface MessageValidator {
   getProvider(): SessionStaticValue;
 
   /** 暗号化に使うCrypotAgentオブジェクトを返します。 */
-  getCryptoAgent(): CryptoAgent<MessageData> | undefined;
+  getCryptoAgent(): CryptoAgent<MessageData>;
 
   /** メッセージが正当か検証します。*/
   isValid(validationParam: ValidationParam): MessageData | undefined;
 }
 
 /** メッセージオブジェクト(暗号化される部分) */
-export type MessageData = {
+export type MessageData = Readonly<{
   /** 拡張機能のID */
-  readonly runtimeId: string;
+  runtimeId: string;
+
+  /** データ識別用のキー */
+  key?: string;
 
   /** メッセージ本文 */
-  readonly message: string;
-};
+  message: string;
+}>;
 
 /** メッセージの正当性検証設定 */
 export type MessageValidatorConfig = Readonly<{
@@ -52,7 +51,7 @@ export type ValidationParam = Readonly<{
   origin: string;
 
   /** チャンネル識別子 */
-  channel?: string;
+  channel: string;
 
   /** メッセージ(ここに暗号化されたMessageDataが入る) */
   message: unknown;
@@ -61,7 +60,7 @@ export type ValidationParam = Readonly<{
 /** APIで実際に送信されるオブジェクト */
 export type TypedRealMessage = {
   token: string;
-  channel?: string;
+  channel: string;
   messageData: string;
 };
 
@@ -73,8 +72,8 @@ export class MessageValidatorImpl implements MessageValidator {
     @inject("SessionStaticToken")
     private readonly tokenProvider: SessionStaticValue,
     @inject("Logger") private readonly logger: Logger,
-    @injectOptional("CryptoAgent")
-    private readonly cryptoAgent?: CryptoAgent<MessageData>,
+    @inject("CryptoAgent")
+    private readonly cryptoAgent: CryptoAgent<MessageData>,
   ) {}
 
   getConfig() {
@@ -106,16 +105,15 @@ export class MessageValidatorImpl implements MessageValidator {
       return;
     }
 
-    // チャンネルが一致しない場合無視(グローバルチャンネル以外)
-    const isGlobalChannel = validationParam.channel;
-    if (!isGlobalChannel && validationParam.channel !== validationParam.message.channel) {
+    // チャンネルが一致しない場合無視
+    if (validationParam.channel !== validationParam.message.channel) {
       return;
     }
 
     // 複合化して
-    const decryptedMessageData =
-      this.cryptoAgent?.decrypt(validationParam.message.messageData) ??
-      isMessageDataParse(validationParam.message.messageData);
+    const decryptedMessageData = this.cryptoAgent.decrypt(
+      validationParam.message.messageData,
+    );
 
     // 必須項目を検証
     if (decryptedMessageData.runtimeId !== this.config.runtimeId) {
