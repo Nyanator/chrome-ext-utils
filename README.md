@@ -1,3 +1,6 @@
+[![Version](https://img.shields.io/npm/v/@nyanator/chrome-ext-utils.svg)](https://www.npmjs.com/package/@nyanator/chrome-ext-utils)
+[![License: MIT](https://img.shields.io/github/license/Nyanator/@nyanator/chrome-ext-utils)](https://github.com/Nyanator/chrome-ext-utils/blob/master/LICENSE)
+
 # chrome-ext-utils
 Chrome拡張のユーティリティクラスライブラリ。tsyringeによるコンストラクタインジェクションに対応しています。
 
@@ -7,7 +10,7 @@ Chrome拡張のユーティリティクラスライブラリ。tsyringeによる
 
 - 未処理例外をユーザーに通知する仕組みの提供。
 
-- IndexedDBなどの外部依存の抽象化層を設定することで、アプリケーションを外部依存の実装と切り離します。
+- IndexedDBなどの外部依存の抽象化層を設定することで、アプリケーションを外部依存の実装と切り離します。 
 
 ## Setup
 
@@ -15,6 +18,12 @@ Chrome拡張のユーティリティクラスライブラリ。tsyringeによる
 
 ```bash
 $ npm i @nyanator/chrome-ext-utils --save-dev
+```
+
+## Run tests
+
+```sh
+npm run test
 ```
 
 ## API
@@ -128,3 +137,19 @@ initializeDIContainer({
 ```
 
 ---
+
+## Author
+
+👤 **nyanator**
+
+* Github: [@Nyanator](https://github.com/Nyanator)
+
+## 📝 License
+
+Copyright © 2023 [nyanator](https://github.com/Nyanator).
+
+This project is [MIT](https://github.com/Nyanator/chrome-ext-utils/blob/master/LICENSE) licensed.
+
+***
+_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
+
