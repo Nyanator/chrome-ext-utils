@@ -2,7 +2,7 @@
 [![License: MIT](https://img.shields.io/github/license/Nyanator/@nyanator/chrome-ext-utils)](https://github.com/Nyanator/chrome-ext-utils/blob/master/LICENSE)
 
 # chrome-ext-utils
-Chrome拡張のユーティリティクラスライブラリ。tsyringeによるコンストラクタインジェクションに対応しています。
+Chrome拡張のユーティリティクラスライブラリ。tsyringeによるコンストラクタインジェクションに対応します。
 
 主要な機能:
 
@@ -10,7 +10,7 @@ Chrome拡張のユーティリティクラスライブラリ。tsyringeによる
 
 - 未処理例外をユーザーに通知する仕組みの提供。
 
-- IndexedDBなどの外部依存の抽象化層を設定することで、アプリケーションを外部依存の実装と切り離します。 
+- IndexedDBなどの外部依存の抽象化層を設定することで、アプリケーションを外部依存と切り離します。 
 
 ## Setup
 
@@ -34,17 +34,17 @@ tsyringe DIコンテナを初期化してメッセージングクラスや各種
 ##### `databaseName`
 
 > Optional | `string`
-IndexedDBの初期化に使用するデータベース名称です。
+IndexedDBの初期化に使用するデータベース名称。
 
 ##### `storeName`
 
 > Optional | `string`
-IndexedDBの初期化に使用するストア名称です。
+IndexedDBの初期化に使用するストア名称。
 
 ##### `allowedOrigins`
 
 > Optional | `string[]`
-メッセージングクラスがデータの送受信を許可するオリジンの一覧です。
+メッセージングクラスがデータの送受信を許可するオリジンの一覧。
 
 ## Example
 
@@ -84,12 +84,11 @@ export class ModuleClass {
 }
 
 ```
-
 ---
 
 ### `RuntimeMessageAgent`
 
-暗号化されたランタイムメッセージの送受信を管理します。chrome.runtime.sendMessageのラップクラスです。
+暗号化されたランタイムメッセージの送受信を管理します。chrome.runtime.sendMessageのラップクラス。
 
 ### Methods
 ### `sendMessage(channel: string, message?: MessageData, tabId?: number): Promise<MessageData | void>`
@@ -98,18 +97,18 @@ export class ModuleClass {
 
 ##### `channel`
 
-> Optional | `string`
-送信先を識別する文字列キーです。
+> Require | `string`
+送信先を識別する文字列キー。
 
 ##### `message`
 
 > Optional | `MessageData`
-送信する本文データです。この部分がAES暗号化されます。
+送信する本文データ。この部分がAES暗号化されます。
 
 ##### `tabId`
 
 > Optional | `number`
-送信先のタブIDです。バックグラウンドスクリプトからコンテンツスクリプトへ送信する際などに指定します。
+送信先のタブID。バックグラウンドスクリプトからコンテンツスクリプトへ送信する際などに指定します。
 
 ---
 
@@ -120,28 +119,94 @@ export class ModuleClass {
 ##### `channel`
 
 > Require | `string`
-受信データをフィルタリングするための文字列キーです。
+受信データをフィルタリングするための文字列キー。
 
 ##### `listener`
 
 > Require | `fn`
-チャンネルがデータを受信したときに実行されるリスナーです。
+チャンネルがデータを受信したときに実行されるリスナー。
 
 ---
 
-### `removeListener(listener: (messageData: MessageData) => Promise<MessageData | void> | void): void`
+## Example
 
-指定したリスナーを解除します。
+<a name="example"></a>
+
+```typescript
+// content.ts
+import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
+import { container } from "tsyringe";
+
+initializeDIContainer({
+  allowedOrigins: ["https://www.example.com/"],
+});
+
+const messageAgent = container.resolve<RuntimeMessageAgent>("RuntimeMessageAgent");
+messageAgent.sentMessage("channel", {message: "hello message"});
+
+```
+
+```typescript
+// background.ts
+import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
+import { container } from "tsyringe";
+
+initializeDIContainer({
+  allowedOrigins: ["https://www.example.com/"],
+});
+
+const messageAgent = container.resolve<RuntimeMessageAgent>("RuntimeMessageAgent");
+messageAgent.addListener("channel", (messageData) => {
+  console.log(messageData.message);
+});
+```
+
+### `WindowMessageAgent`
+
+暗号化されたウィンドウメッセージの送受信を管理します。winodow.postMessageのラップクラス。
+
+### Methods
+### `postMessage(target: Window,　targetOrigin: string, channel: string, message?: MessageData,): Promise<void>`
+
+暗号化されたウィンドウメッセージを送信します。指定したウィンドウ、オリジンのchannelへメッセージを送信します。
+
+##### `target`
+
+> Require | `Window`
+送信先ウィンドウ。
+
+##### `targetOrigin`
+
+> Require | `string`
+送信先オリジン。initializeDIContainerで許可したオリジン以外を指定すると例外が発生します。
+
+##### `channel`
+
+> Require | `string`
+送信先を識別する文字列キー。
+
+##### `message`
+
+> Optional | `MessageData`
+送信する本文データ。この部分がAES暗号化されます。
+
+---
+
+### `addListener(channel: string, listener: (event: MessageData) => void): void`
+
+指定したchannelでのウィンドウメッセージを受信し、復号化してリスナー関数に渡します。
+
+##### `channel`
+
+> Require | `string`
+受信データをフィルタリングするための文字列キー。
 
 ##### `listener`
 
 > Require | `fn`
-解除するリスナーです。
+チャンネルがデータを受信したときに実行されるリスナー。
 
 ---
-
-### `clearListeners(): void`
-リスナーをすべて解除します。
 
 ## Example
 
