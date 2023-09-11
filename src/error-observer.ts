@@ -49,9 +49,13 @@ export class DisplayAlertErrorObserver implements ErrorObserver {
         // ただし、バックグランドにはalertは実装されないので表示しない
         if (alert) {
           const displayMaessage = chrome.i18n.getMessage(error.name);
-          alert(displayMaessage);
+          if (!displayMaessage) {
+            alert(error.originalError);
+          } else {
+            alert(displayMaessage);
+          }
         }
-        errorDetail = error.stack;
+        errorDetail = `${error.originalError}`;
       } else if (error instanceof Error) {
         message = error.message;
         errorDetail = error.stack;
