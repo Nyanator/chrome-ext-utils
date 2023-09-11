@@ -19,7 +19,7 @@ export interface RuntimeMessageAgent {
    */
   sendMessage(
     channel: string,
-    message: MessageData,
+    message?: MessageData,
     tabId?: number,
   ): Promise<MessageData | void>;
 
@@ -61,9 +61,19 @@ export class RuntimeMessageAgentImpl implements RuntimeMessageAgent {
 
   async sendMessage(
     channel: string,
-    message: MessageData,
+    message?: MessageData,
     tabId?: number,
   ): Promise<MessageData | void> {
+    if (!message) {
+      message = {
+        runtimeId: chrome.runtime.id,
+      };
+    }
+
+    if (!message.runtimeId) {
+      message.runtimeId = chrome.runtime.id;
+    }
+
     const latestValidator = await this.validatorManager.getLatestValidator();
 
     const cryptoAgent = latestValidator.getCryptoAgent();

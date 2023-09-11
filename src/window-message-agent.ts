@@ -22,7 +22,7 @@ export interface WindowMessageAgent {
     target: Window,
     targetOrigin: string,
     channel: string,
-    message: MessageData,
+    message?: MessageData,
   ): Promise<void>;
 
   /**
@@ -58,8 +58,18 @@ export class WindowMessageAgentImpl implements WindowMessageAgent {
     target: Window,
     targetOrigin: string,
     channel: string,
-    message: MessageData,
+    message?: MessageData,
   ): Promise<void> {
+    if (!message) {
+      message = {
+        runtimeId: chrome.runtime.id,
+      };
+    }
+
+    if (!message.runtimeId) {
+      message.runtimeId = chrome.runtime.id;
+    }
+
     if (!this.validatorConfig.allowedOrigins.includes(targetOrigin)) {
       throw new Error(`Invalid targetOrigin: ${targetOrigin}`);
     }

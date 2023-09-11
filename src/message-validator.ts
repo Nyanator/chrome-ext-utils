@@ -25,16 +25,16 @@ export interface MessageValidator {
 }
 
 /** メッセージオブジェクト(暗号化される部分) */
-export type MessageData = Readonly<{
+export type MessageData = {
   /** 拡張機能のID */
-  runtimeId: string;
+  runtimeId?: string;
 
   /** データ識別用のキー */
-  key?: string;
+  readonly key?: string;
 
   /** メッセージ本文 */
-  message: string;
-}>;
+  readonly message?: string;
+};
 
 /** メッセージの正当性検証設定 */
 export type MessageValidatorConfig = Readonly<{
