@@ -18,6 +18,34 @@ Chrome拡張のユーティリティクラスライブラリ。tsyringeによる
 $ npm i @nyanator/chrome-ext-utils --save-dev
 ```
 
+manifest.jsonのバージョン3に対応しています。permissionsに"tabs"、"storage"、"alarms"の指定が必要です。
+また、cryptokeyファイルにランダムなUUIDを保存して"web_accessible_resources"に追加してください。
+暗号化通信の鍵として利用します。
+
+```json
+{
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "description": "Web Develop Tools for ChatGPT",
+  "manifest_version": 3,
+  "permissions": ["tabs", "storage", "alarms"],
+  "web_accessible_resources": [
+    {
+      "matches": ["https://chat.openai.com/*"],
+      "resources": ["cryptokey"]
+    }
+  ]
+}
+
+```
+
 ## Run tests
 
 ```sh
