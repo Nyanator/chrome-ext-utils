@@ -125,15 +125,32 @@ initializeDIContainer({
 <a name="example"></a>
 
 ```typescript
-
+// content.ts
 import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
+import { container } from "tsyringe";
 
 initializeDIContainer({
-  databaseName: "databaseName",
-  storeName: "storeName",
   allowedOrigins: ["https://www.example.com/"],
 });
 
+const messageAgent = container.resolve<RuntimeMessageAgent>("RuntimeMessageAgent");
+messageAgent.sentMessage("channel", {message: "hello message"});
+
+```
+
+```typescript
+// background.ts
+import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
+import { container } from "tsyringe";
+
+initializeDIContainer({
+  allowedOrigins: ["https://www.example.com/"],
+});
+
+const messageAgent = container.resolve<RuntimeMessageAgent>("RuntimeMessageAgent");
+messageAgent.addListener("channel", (messageData) => {
+  console.log(messageData.message);
+});
 ```
 
 ---
