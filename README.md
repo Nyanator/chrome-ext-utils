@@ -8,8 +8,6 @@ Chrome拡張のユーティリティクラスライブラリ。tsyringeによる
 
 - AES暗号化されたコンテキスト通信に対応。
 
-- 未処理例外をユーザーに通知する仕組みの提供。
-
 - IndexedDBなどの外部依存の抽象化層を設定することで、アプリケーションを外部依存と切り離します。 
 
 ## Setup
@@ -126,15 +124,16 @@ export class ModuleClass {
 > Require | `fn`
 チャンネルがデータを受信したときに実行されるリスナー。
 
----
-
 ## Example
 
 <a name="example"></a>
 
 ```typescript
 // content.ts
-import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
+import {
+  initializeDIContainer,
+  RuntimeMessageAgent
+} from "@nyanator/chrome-ext-utils";
 import { container } from "tsyringe";
 
 initializeDIContainer({
@@ -148,7 +147,10 @@ messageAgent.sentMessage("channel", {message: "hello message"});
 
 ```typescript
 // background.ts
-import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
+import {
+  initializeDIContainer,
+  RuntimeMessageAgent
+} from "@nyanator/chrome-ext-utils";
 import { container } from "tsyringe";
 
 initializeDIContainer({
@@ -160,6 +162,8 @@ messageAgent.addListener("channel", (messageData) => {
   console.log(messageData.message);
 });
 ```
+
+---
 
 ### `WindowMessageAgent`
 
@@ -206,39 +210,44 @@ messageAgent.addListener("channel", (messageData) => {
 > Require | `fn`
 チャンネルがデータを受信したときに実行されるリスナー。
 
----
-
 ## Example
 
 <a name="example"></a>
 
 ```typescript
 // content.ts
-import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
+import {
+  initializeDIContainer,
+  WindowMessageAgent
+} from "@nyanator/chrome-ext-utils";
 import { container } from "tsyringe";
 
 initializeDIContainer({
   allowedOrigins: ["https://www.example.com/"],
 });
 
-const messageAgent = container.resolve<RuntimeMessageAgent>("RuntimeMessageAgent");
-messageAgent.sentMessage("channel", {message: "hello message"});
+const messageAgent = container.resolve<WindowMessageAgent>("WindowMessageAgent");
+messageAgent.addListener("channel", (messageData) => {
+  console.log(messageData.message);
+});
 
 ```
 
 ```typescript
-// background.ts
-import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
+// iframe.ts
+import {
+  initializeDIContainer,
+  WindowMessageAgent
+} from "@nyanator/chrome-ext-utils";
 import { container } from "tsyringe";
 
 initializeDIContainer({
   allowedOrigins: ["https://www.example.com/"],
 });
 
-const messageAgent = container.resolve<RuntimeMessageAgent>("RuntimeMessageAgent");
-messageAgent.addListener("channel", (messageData) => {
-  console.log(messageData.message);
-});
+const messageAgent = container.resolve<WindowMessageAgent>("WindowMessageAgent");
+messageAgent.postMessage(window.parent, "https://www.example.com/", "channel", {message: "hello message"});
+
 ```
 
 ---
