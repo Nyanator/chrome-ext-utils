@@ -278,6 +278,18 @@ messageAgent.postMessage(window.parent, "https://www.example.com/", "channel", {
 
 ```
 
+<a name="behaviour"></a>
+
+## Etc
+
+- CrossDispathcer 片付けされたイベントエミッター
+
+- CryptoAgent 暗号化インターフェース
+
+- ErrorObserver 未処理例外をユーザーに通知する機能を提供
+
+- And More...
+
 ---
 
 ## Author
