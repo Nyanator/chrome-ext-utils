@@ -51,7 +51,7 @@ IndexedDBの初期化に使用するストア名称です。
 <a name="example"></a>
 
 ```typescript
-
+// entrypoint.ts
 import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
 
 initializeDIContainer({
@@ -59,6 +59,29 @@ initializeDIContainer({
   storeName: "storeName",
   allowedOrigins: ["https://www.example.com/"],
 });
+
+```
+
+```typescript
+// module-class.ts
+import {
+  DatabaseAgent,
+  Logger,
+  RuntimeMessageAgent,
+  WindowMessageAgent,
+} from "@nyanator/chrome-ext-utils";
+import { inject, injectable } from "tsyringe";
+
+@injectable()
+export class ModuleClass {
+  constructor(
+    @inject("CrossDispatcher") crossDispatcher: CrossDispatcher,
+    @inject("DatabaseAgent") databaseAgent: DatabaseAgent,
+    @inject("Logger") logger: Logger,
+    @inject("RuntimeMessageAgent") runtimeMessageAgent: RuntimeMessageAgent,
+    @inject("WindowMessageAgent") windowMessageAgent: WindowMessageAgent,
+    ) { }
+}
 
 ```
 
