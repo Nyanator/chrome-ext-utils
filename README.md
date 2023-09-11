@@ -1,5 +1,5 @@
 [![Version](https://img.shields.io/npm/v/@nyanator/chrome-ext-utils.svg)](https://www.npmjs.com/package/@nyanator/chrome-ext-utils)
-[![License: MIT](https://img.shields.io/github/license/Nyanator/@nyanator/chrome-ext-utils)](https://github.com/Nyanator/chrome-ext-utils/blob/master/LICENSE)
+[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
 # chrome-ext-utils
 Chrome拡張のユーティリティクラスライブラリ。tsyringeによるコンストラクタインジェクションに対応します。
