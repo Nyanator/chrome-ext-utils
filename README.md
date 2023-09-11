@@ -1,19 +1,16 @@
 # chrome-ext-utils
 Chrome拡張のユーティリティクラスライブラリです。
+tsyringeによるコンストラクタインジェクションに対応しています。
 
 ## example
 
 <a name="example"></a>
 
-```javascript
+## Setup
 
-import { initializeDIContainer } from "@nyanator/chrome-ext-utils";
+### Install
 
-initializeDIContainer({
-  databaseName: "databaseName",
-  storeName: "storeName",
-  allowedOrigins: ["[http](https://www.example.com/)https://www.example.com/"],
-});
-
+```bash
+$ npm i @nyanator/chrome-ext-utils --save-dev
 ```
 
